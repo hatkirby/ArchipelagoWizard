@@ -9,6 +9,8 @@
 
 #include <wx/scrolwin.h>
 
+#include <list>
+
 #include "game_definition.h"
 #include "world.h"
 
@@ -19,8 +21,11 @@ class wxBoxSizer;
 
 struct FormOption {
   std::string option_name;
-  wxChoice* combo_box;
-  wxSlider* slider;
+  wxChoice* combo_box = nullptr;
+  wxSlider* slider = nullptr;
+  wxStaticText* label = nullptr;
+
+  void OnRangeSliderChanged(wxCommandEvent& event);
 };
 
 class WizardEditor : public wxScrolledWindow {
@@ -41,7 +46,7 @@ class WizardEditor : public wxScrolledWindow {
   wxPanel* other_options_ = nullptr;
   wxBoxSizer* top_sizer_;
 
-  std::vector<FormOption> form_options_;
+  std::list<FormOption> form_options_;
 };
 
 #endif /* end of include guard: WIZARD_EDITOR_H_AB195E2D */

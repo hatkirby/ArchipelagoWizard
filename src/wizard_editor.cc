@@ -52,7 +52,8 @@ void WizardEditor::Rebuild() {
     options_form_sizer->AddGrowableCol(1);
 
     for (const OptionDefinition& game_option : game_options) {
-      FormOption form_option;
+      form_options_.emplace_back();
+      FormOption& form_option = form_options_.back();
 
       options_form_sizer->Add(new wxStaticText(other_options_, wxID_ANY,
                                                game_option.display_name + ":"),
@@ -76,11 +77,22 @@ void WizardEditor::Rebuild() {
         form_option.slider = new wxSlider(
             other_options_, wxID_ANY, game_option.default_range_value,
             game_option.min_value, game_option.max_value);
+        form_option.slider->Bind(
+            wxEVT_SLIDER, &FormOption::OnRangeSliderChanged, &form_option);
 
-        options_form_sizer->Add(form_option.slider, wxSizerFlags().Expand());
+        form_option.label =
+            new wxStaticText(other_options_, wxID_ANY,
+                             std::to_string(game_option.default_range_value));
+
+        wxFlexGridSizer* range_sizer = new wxFlexGridSizer(2, 10, 10);
+        range_sizer->AddGrowableCol(0);
+
+        range_sizer->Add(form_option.slider, wxSizerFlags().Expand());
+        range_sizer->Add(form_option.label,
+                         wxSizerFlags().Align(wxALIGN_RIGHT));
+
+        options_form_sizer->Add(range_sizer, wxSizerFlags().Expand());
       }
-
-      form_options_.push_back(std::move(form_option));
     }
 
     other_options_->SetSizerAndFit(options_form_sizer);
@@ -96,4 +108,13 @@ void WizardEditor::OnChangeGame(wxCommandEvent& event) {
   world_.SetGame(game_box_->GetString(game_box_->GetSelection()).ToStdString());
 
   Rebuild();
+}
+
+void FormOption::OnRangeSliderChanged(wxCommandEvent& event) {
+  if (slider == nullptr || label == nullptr) {
+    return;
+  }
+
+  label->SetLabel(std::to_string(slider->GetValue()));
+  label->GetContainingSizer()->Layout();
 }
