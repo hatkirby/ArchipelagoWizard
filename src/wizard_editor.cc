@@ -55,8 +55,10 @@ void WizardEditor::Rebuild() {
       form_options_.emplace_back();
       FormOption& form_option = form_options_.back();
 
-      options_form_sizer->Add(new wxStaticText(other_options_, wxID_ANY,
-                                               game_option.display_name + ":"),
+      wxStaticText* option_label =
+          new wxStaticText(other_options_, wxID_ANY, "");
+      option_label->SetLabelText(game_option.display_name + ":");
+      options_form_sizer->Add(option_label,
                               wxSizerFlags().Align(wxALIGN_TOP | wxALIGN_LEFT));
 
       if (game_option.type == kSelectOption) {
