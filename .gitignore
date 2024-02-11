@@ -1,0 +1,4 @@
+build/
+builds/
+.DS_Store
+.vs

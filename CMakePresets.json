@@ -1,0 +1,42 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 1,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "ap-wizard",
+      "displayName": "AP Wizard preset",
+      "description": "Configure with vcpkg toolchain and generate Ninja project files for all configurations",
+      "binaryDir": "${sourceDir}/builds/${presetName}",
+      "generator": "Ninja Multi-Config",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        }
+      },
+      "environment": {
+        "VCPKG_ROOT": "./vendor/vcpkg"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "ap-wizard-debug",
+      "configurePreset": "ap-wizard",
+      "displayName": "Build ap-wizard",
+      "description": "Build",
+      "configuration": "Debug"
+    },
+    {
+      "name": "ap-wizard-release",
+      "displayName": "Release Build x64",
+      "description": "Build release x64",
+      "configurePreset": "ap-wizard",
+      "configuration": "Release"
+    }
+  ]
+}
