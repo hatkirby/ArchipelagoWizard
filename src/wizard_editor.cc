@@ -91,7 +91,44 @@ void WizardEditor::Rebuild() {
         range_sizer->Add(form_option.label,
                          wxSizerFlags().Align(wxALIGN_RIGHT));
 
-        options_form_sizer->Add(range_sizer, wxSizerFlags().Expand());
+        wxSizer* final_sizer = range_sizer;
+
+        if (game_option.named_range) {
+          for (const auto& [value_value, value_name] :
+               game_option.value_names) {
+            form_option.named_values[value_value] = value_name;
+          }
+
+          form_option.combo_box = new wxChoice(other_options_, wxID_ANY);
+
+          int default_selection = -1;
+          for (const auto& [value_value, value_name] :
+               game_option.value_names) {
+            if (value_value == game_option.default_range_value) {
+              default_selection = form_option.combo_box->GetCount();
+            }
+            form_option.combo_box->Append(value_name);
+          }
+
+          form_option.combo_box->Append("Custom");
+
+          if (default_selection == -1) {
+            default_selection = form_option.combo_box->GetCount() - 1;
+          }
+          form_option.combo_box->SetSelection(default_selection);
+
+          form_option.combo_box->Bind(
+              wxEVT_CHOICE, &FormOption::OnNamedRangeChanged, &form_option);
+
+          wxBoxSizer* named_sizer = new wxBoxSizer(wxVERTICAL);
+          named_sizer->Add(form_option.combo_box, wxSizerFlags().Expand());
+          named_sizer->AddSpacer(5);
+          named_sizer->Add(range_sizer, wxSizerFlags().Expand());
+
+          final_sizer = named_sizer;
+        }
+
+        options_form_sizer->Add(final_sizer, wxSizerFlags().Expand());
       }
     }
 
@@ -117,4 +154,39 @@ void FormOption::OnRangeSliderChanged(wxCommandEvent& event) {
 
   label->SetLabel(std::to_string(slider->GetValue()));
   label->GetContainingSizer()->Layout();
+
+  if (combo_box != nullptr) {
+    std::string should_name = "Custom";
+    if (named_values.count(slider->GetValue())) {
+      should_name = named_values.at(slider->GetValue());
+    }
+
+    int selection = combo_box->FindString(should_name);
+    if (combo_box->GetSelection() != selection) {
+      combo_box->SetSelection(selection);
+    }
+  }
+}
+
+void FormOption::OnNamedRangeChanged(wxCommandEvent& event) {
+  if (combo_box == nullptr || slider == nullptr) {
+    return;
+  }
+
+  int result = slider->GetValue();
+  for (const auto& [value_value, value_name] : named_values) {
+    if (value_name == combo_box->GetString(combo_box->GetSelection())) {
+      result = value_value;
+      break;
+    }
+  }
+
+  if (result != slider->GetValue()) {
+    slider->SetValue(result);
+
+    if (label != nullptr) {
+      label->SetLabel(std::to_string(slider->GetValue()));
+      label->GetContainingSizer()->Layout();
+    }
+  }
 }

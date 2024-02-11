@@ -10,6 +10,7 @@
 #include <wx/scrolwin.h>
 
 #include <list>
+#include <map>
 
 #include "game_definition.h"
 #include "world.h"
@@ -25,7 +26,10 @@ struct FormOption {
   wxSlider* slider = nullptr;
   wxStaticText* label = nullptr;
 
+  std::map<int, std::string> named_values;
+
   void OnRangeSliderChanged(wxCommandEvent& event);
+  void OnNamedRangeChanged(wxCommandEvent& event);
 };
 
 class WizardEditor : public wxScrolledWindow {
