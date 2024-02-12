@@ -39,6 +39,8 @@ class WizardEditor : public wxScrolledWindow {
  private:
   void Rebuild();
 
+  void Populate();
+
   void OnChangeGame(wxCommandEvent& event);
 
   const GameDefinitions* game_definitions_;

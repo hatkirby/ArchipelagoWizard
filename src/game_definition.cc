@@ -56,7 +56,8 @@ GameDefinitions::GameDefinitions() {
 
     std::cout << "Read " << options.size() << " options for " << game_name
               << std::endl;
-    options_by_game_[game_name] = std::move(options);
+    games_.emplace(std::piecewise_construct, std::forward_as_tuple(game_name),
+                   std::forward_as_tuple(game_name, std::move(options)));
     all_games_.insert(game_name);
   }
 }

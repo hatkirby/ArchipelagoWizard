@@ -31,19 +31,39 @@ struct OptionDefinition {
       choices;  // id, display name
 };
 
+class Game {
+ public:
+  Game(std::string name, std::vector<OptionDefinition> options)
+      : name_(std::move(name)), options_(std::move(options)) {
+    for (const OptionDefinition& option : options_) {
+      options_by_name_[option.name] = option;
+    }
+  }
+
+  const std::string& GetName() const { return name_; }
+
+  const std::vector<OptionDefinition>& GetOptions() const { return options_; }
+
+  const OptionDefinition& GetOption(const std::string& option_name) const {
+    return options_by_name_.at(option_name);
+  }
+
+ private:
+  std::string name_;
+  std::vector<OptionDefinition> options_;
+  std::map<std::string, OptionDefinition> options_by_name_;
+};
+
 class GameDefinitions {
  public:
   GameDefinitions();
 
-  const std::vector<OptionDefinition>& GetGameOptions(
-      const std::string& game) const {
-    return options_by_game_.at(game);
-  }
+  const Game& GetGame(const std::string& game) const { return games_.at(game); }
 
   const std::set<std::string>& GetAllGames() const { return all_games_; }
 
  private:
-  std::map<std::string, std::vector<OptionDefinition>> options_by_game_;
+  std::map<std::string, Game> games_;
   std::set<std::string> all_games_;
 };
 

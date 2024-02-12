@@ -45,15 +45,15 @@ void WizardEditor::Rebuild() {
   if (world_.HasGame()) {
     other_options_ = new wxPanel(this, wxID_ANY);
 
-    const std::vector<OptionDefinition>& game_options =
-        game_definitions_->GetGameOptions(world_.GetGame());
+    const Game& game = game_definitions_->GetGame(world_.GetGame());
 
     wxFlexGridSizer* options_form_sizer = new wxFlexGridSizer(2, 10, 10);
     options_form_sizer->AddGrowableCol(1);
 
-    for (const OptionDefinition& game_option : game_options) {
+    for (const OptionDefinition& game_option : game.GetOptions()) {
       form_options_.emplace_back();
       FormOption& form_option = form_options_.back();
+      form_option.option_name = game_option.name;
 
       wxStaticText* option_label =
           new wxStaticText(other_options_, wxID_ANY, "");
@@ -64,15 +64,9 @@ void WizardEditor::Rebuild() {
       if (game_option.type == kSelectOption) {
         form_option.combo_box = new wxChoice(other_options_, wxID_ANY);
 
-        int default_selection = 0;
         for (const auto& [value_id, value_display] : game_option.choices) {
-          if (value_id == game_option.default_choice) {
-            default_selection = form_option.combo_box->GetCount();
-          }
           form_option.combo_box->Append(value_display);
         }
-
-        form_option.combo_box->SetSelection(default_selection);
 
         options_form_sizer->Add(form_option.combo_box, wxSizerFlags().Expand());
       } else if (game_option.type == kRangeOption) {
@@ -82,9 +76,7 @@ void WizardEditor::Rebuild() {
         form_option.slider->Bind(
             wxEVT_SLIDER, &FormOption::OnRangeSliderChanged, &form_option);
 
-        form_option.label =
-            new wxStaticText(other_options_, wxID_ANY,
-                             std::to_string(game_option.default_range_value));
+        form_option.label = new wxStaticText(other_options_, wxID_ANY, "");
 
         wxFlexGridSizer* range_sizer = new wxFlexGridSizer(2, 10, 10);
         range_sizer->AddGrowableCol(0);
@@ -103,21 +95,11 @@ void WizardEditor::Rebuild() {
 
           form_option.combo_box = new wxChoice(other_options_, wxID_ANY);
 
-          int default_selection = -1;
           for (const auto& [value_value, value_name] :
                game_option.value_names) {
-            if (value_value == game_option.default_range_value) {
-              default_selection = form_option.combo_box->GetCount();
-            }
             form_option.combo_box->Append(value_name);
           }
-
           form_option.combo_box->Append("Custom");
-
-          if (default_selection == -1) {
-            default_selection = form_option.combo_box->GetCount() - 1;
-          }
-          form_option.combo_box->SetSelection(default_selection);
 
           form_option.combo_box->Bind(
               wxEVT_CHOICE, &FormOption::OnNamedRangeChanged, &form_option);
@@ -138,9 +120,46 @@ void WizardEditor::Rebuild() {
     top_sizer_->Add(other_options_, wxSizerFlags().DoubleBorder().Expand());
   }
 
+  Populate();
+
   SetSizer(top_sizer_);
   Layout();
   FitInside();
+}
+
+void WizardEditor::Populate() {
+  if (!world_.HasGame()) return;
+
+  const Game& game = game_definitions_->GetGame(world_.GetGame());
+
+  for (FormOption& form_option : form_options_) {
+    const OptionDefinition& game_option =
+        game.GetOption(form_option.option_name);
+
+    if (game_option.type == kSelectOption) {
+      std::string str_sel =
+          world_.HasOption(form_option.option_name)
+              ? world_.GetOption(form_option.option_name).string_value
+              : game_option.default_choice;
+      form_option.combo_box->SetSelection(
+          form_option.combo_box->FindString(str_sel));
+    } else if (game_option.type == kRangeOption) {
+      int int_sel = world_.HasOption(form_option.option_name)
+                        ? world_.GetOption(form_option.option_name).int_value
+                        : game_option.default_range_value;
+      form_option.slider->SetValue(int_sel);
+      form_option.label->SetLabel(std::to_string(int_sel));
+
+      if (game_option.named_range) {
+        std::string findstr = "Custom";
+        if (form_option.named_values.count(int_sel)) {
+          findstr = form_option.named_values.at(int_sel);
+        }
+        form_option.combo_box->SetSelection(
+            form_option.combo_box->FindString(findstr));
+      }
+    }
+  }
 }
 
 void WizardEditor::OnChangeGame(wxCommandEvent& event) {
