@@ -108,6 +108,15 @@ void WizardEditor::OnChangeName(wxCommandEvent& event) {
 }
 
 void WizardEditor::OnChangeGame(wxCommandEvent& event) {
+  if (world_->HasSetOptions()) {
+    if (wxMessageBox("This World has options set on it. Changing the game will "
+                     "clear these options. Are you sure you want to proceed?",
+                     "Confirm", wxYES_NO, this) == wxNO) {
+      game_box_->SetSelection(game_box_->FindString(world_->GetGame()));
+      return;
+    }
+  }
+
   if (game_box_->GetSelection() == 0) {
     world_->UnsetGame();
   } else {

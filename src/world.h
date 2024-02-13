@@ -51,6 +51,8 @@ class World {
 
   void UnsetOption(const std::string& option_name);
 
+  bool HasSetOptions() const { return !options_.empty(); }
+
   void SetMetaUpdateCallback(std::function<void()> callback) {
     meta_update_callback_ = callback;
   }
