@@ -63,7 +63,25 @@ void WizardFrame::OnNewWorld(wxCommandEvent& event) {
   InitializeWorld(std::make_unique<World>());
 }
 
-void WizardFrame::OnLoadWorld(wxCommandEvent& event) {}
+void WizardFrame::OnLoadWorld(wxCommandEvent& event) {
+  wxFileDialog openFileDialog(this, "Open World YAML", "", "",
+                              "YAML files (*.yaml;*.yml)|*.yaml;*.yml",
+                              wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+  if (openFileDialog.ShowModal() == wxID_CANCEL) {
+    return;
+  }
+
+  try {
+    std::unique_ptr<World> load_world = std::make_unique<World>();
+    load_world->Load(openFileDialog.GetPath().ToStdString(),
+                     game_definitions_.get());
+
+    InitializeWorld(std::move(load_world));
+  } catch (const std::exception& ex) {
+    wxMessageBox(ex.what(), "Error loading World", wxOK, this);
+  }
+}
 
 void WizardFrame::OnSaveWorld(wxCommandEvent& event) {}
 

@@ -18,6 +18,8 @@ class OrderedBijection {
 
   const std::vector<std::tuple<K, V>>& GetItems() const { return ordering_; }
 
+  bool HasKey(const K& key) const { return forward_.count(key); }
+
   const V& GetByKey(const K& key) const { return forward_.at(key); }
 
   std::optional<V> GetByKeyOptional(const K& key) const {
@@ -27,6 +29,8 @@ class OrderedBijection {
       return std::nullopt;
     }
   }
+
+  bool HasValue(const V& value) const { return backward_.count(value); }
 
   const K& GetByValue(const V& value) const { return backward_.at(value); }
 

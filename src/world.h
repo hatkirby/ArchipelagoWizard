@@ -1,11 +1,15 @@
 #ifndef WORLD_H_3EAD88F6
 #define WORLD_H_3EAD88F6
 
+#include <yaml-cpp/yaml.h>
+
 #include <functional>
 #include <map>
 #include <optional>
 #include <string>
 #include <vector>
+
+class GameDefinitions;
 
 struct OptionValue {
   bool random = false;
@@ -16,9 +20,8 @@ struct OptionValue {
 
 class World {
  public:
-  World();
-
-  World(std::string_view filename);
+  void Load(const std::string& filename,
+            const GameDefinitions* game_definitions);
 
   void Save();
 
@@ -50,6 +53,8 @@ class World {
   std::string name_;
   std::optional<std::string> game_;
   std::map<std::string, OptionValue> options_;
+
+  YAML::Node yaml_;
 
   std::function<void()> meta_update_callback_;
 };
