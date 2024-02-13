@@ -35,7 +35,7 @@ WizardEditor::WizardEditor(wxWindow* parent,
   top_sizer_->Add(form_sizer, wxSizerFlags().DoubleBorder().Expand());
   top_sizer_->Add(new wxStaticLine(this));
 
-  SetScrollRate(20, 20);
+  SetScrollRate(0, 20);
 
   Rebuild();
 }

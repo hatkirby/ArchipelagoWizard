@@ -7,7 +7,7 @@
 #include <wx/wx.h>
 #endif
 
-#include <wx/listctrl.h>
+#include <wx/treectrl.h>
 
 #include "game_definition.h"
 #include "world.h"
@@ -21,11 +21,18 @@ class WizardFrame : public wxFrame {
   WizardFrame();
 
  private:
+  void OnNewWorld(wxCommandEvent& event);
+  void OnLoadWorld(wxCommandEvent& event);
+  void OnSaveWorld(wxCommandEvent& event);
   void OnExit(wxCommandEvent& event);
-  void OnWorldSelected(wxListEvent& event);
+  void OnWorldSelected(wxTreeEvent& event);
+
+  void InitializeWorld(std::unique_ptr<World> world);
+  void SyncWorldIndices();
+  void UpdateWorldDisplay(World* world, wxTreeItemId tree_item_id);
 
   wxSplitterWindow* splitter_window_;
-  wxListView* world_list_;
+  wxTreeCtrl* world_list_;
   WorldWindow* world_window_;
 
   std::unique_ptr<GameDefinitions> game_definitions_;
