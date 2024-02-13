@@ -1,47 +1,14 @@
 #include "world.h"
 
 #include <fstream>
+#include <sstream>
 
 #include "wizard_frame.h"
 
 void World::Load(const std::string& filename) {
   yaml_ = YAML::LoadFile(filename);
 
-  if (yaml_["name"]) {
-    name_ = yaml_["name"].as<std::string>();
-  }
-
-  // TODO: Handle weighting.
-  if (yaml_["game"]) {
-    game_ = yaml_["game"].as<std::string>();
-
-    if (yaml_[*game_]) {
-      const YAML::Node& game_node = yaml_[*game_];
-      const Game& game = game_definitions_->GetGame(*game_);
-
-      for (const OptionDefinition& option : game.GetOptions()) {
-        if (game_node[option.name]) {
-          if (option.type == kSelectOption) {
-            std::string str_val = game_node[option.name].as<std::string>();
-            if (option.choices.HasKey(str_val)) {
-              OptionValue option_value;
-              option_value.string_value = str_val;
-
-              options_[option.name] = std::move(option_value);
-            }
-          } else if (option.type == kRangeOption) {
-            int int_val = game_node[option.name].as<int>();
-            OptionValue option_value;
-            option_value.int_value = int_val;
-
-            options_[option.name] = std::move(option_value);
-          } else if (option.type == kListOption) {
-            // TODO: Read list options
-          }
-        }
-      }
-    }
-  }
+  PopulateFromYaml();
 }
 
 void World::SetName(std::string name) {
@@ -56,7 +23,19 @@ void World::SetName(std::string name) {
 
 void World::Save(const std::string& filename) {
   std::ofstream file_stream(filename);
-  file_stream << yaml_;
+  file_stream << yaml_ << std::endl;
+}
+
+void World::FromYaml(const std::string& text) {
+  yaml_ = YAML::Load(text);
+
+  PopulateFromYaml();
+}
+
+std::string World::ToYaml() const {
+  std::ostringstream str_stream;
+  str_stream << yaml_ << std::endl;
+  return str_stream.str();
 }
 
 void World::SetGame(const std::string& game) {
@@ -112,5 +91,45 @@ void World::UnsetOption(const std::string& option_name) {
 
   if (yaml_[*game_] && yaml_[*game_][option_name]) {
     yaml_[*game_].remove(option_name);
+  }
+}
+
+void World::PopulateFromYaml() {
+  options_.clear();
+
+  if (yaml_["name"]) {
+    name_ = yaml_["name"].as<std::string>();
+  }
+
+  // TODO: Handle weighting.
+  if (yaml_["game"]) {
+    game_ = yaml_["game"].as<std::string>();
+
+    if (yaml_[*game_]) {
+      const YAML::Node& game_node = yaml_[*game_];
+      const Game& game = game_definitions_->GetGame(*game_);
+
+      for (const OptionDefinition& option : game.GetOptions()) {
+        if (game_node[option.name]) {
+          if (option.type == kSelectOption) {
+            std::string str_val = game_node[option.name].as<std::string>();
+            if (option.choices.HasKey(str_val)) {
+              OptionValue option_value;
+              option_value.string_value = str_val;
+
+              options_[option.name] = std::move(option_value);
+            }
+          } else if (option.type == kRangeOption) {
+            int int_val = game_node[option.name].as<int>();
+            OptionValue option_value;
+            option_value.int_value = int_val;
+
+            options_[option.name] = std::move(option_value);
+          } else if (option.type == kListOption) {
+            // TODO: Read list options
+          }
+        }
+      }
+    }
   }
 }

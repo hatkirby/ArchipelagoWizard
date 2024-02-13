@@ -27,6 +27,10 @@ class World {
 
   void Save(const std::string& filename);
 
+  void FromYaml(const std::string& text);
+
+  std::string ToYaml() const;
+
   const std::string& GetName() const { return name_; }
 
   void SetName(std::string name);
@@ -52,6 +56,8 @@ class World {
   }
 
  private:
+  void PopulateFromYaml();
+
   const GameDefinitions* game_definitions_;
 
   std::string name_;

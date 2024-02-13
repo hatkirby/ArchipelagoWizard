@@ -55,12 +55,14 @@ class WizardEditor : public wxScrolledWindow {
 
   void LoadWorld(World* world);
 
+  void Reload();
+
  private:
   friend class FormOption;
 
-  void Rebuild();
-
   void Populate();
+
+  void Rebuild();
 
   void OnChangeName(wxCommandEvent& event);
   void OnChangeGame(wxCommandEvent& event);

@@ -54,6 +54,11 @@ void WizardEditor::LoadWorld(World* world) {
   Rebuild();
 }
 
+void WizardEditor::Reload() {
+  Populate();
+  Layout();
+}
+
 void WizardEditor::Rebuild() {
   if (other_options_ != nullptr) {
     other_options_->Destroy();

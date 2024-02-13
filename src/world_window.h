@@ -12,6 +12,7 @@
 class GameDefinitions;
 class WizardEditor;
 class World;
+class YamlEditor;
 
 class WorldWindow : public wxNotebook {
  public:
@@ -20,9 +21,12 @@ class WorldWindow : public wxNotebook {
   void LoadWorld(World* world);
 
  private:
+  void OnPageChanged(wxBookCtrlEvent& event);
+
   const GameDefinitions* game_definitions_;
 
   WizardEditor* wizard_editor_;
+  YamlEditor* yaml_editor_;
 
   World* world_;
 };
