@@ -22,6 +22,7 @@ WizardFrame::WizardFrame()
   Bind(wxEVT_MENU, &WizardFrame::OnExit, this, wxID_EXIT);
 
   splitter_window_ = new wxSplitterWindow(this, wxID_ANY);
+  splitter_window_->SetMinimumPaneSize(250);
 
   worlds_.push_back(std::make_unique<World>());
   worlds_.push_back(std::make_unique<World>());
