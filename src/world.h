@@ -29,6 +29,8 @@ class World {
 
   void SetGame(const std::string& game) { game_ = game; }
 
+  void UnsetGame() { game_ = std::nullopt; }
+
   bool HasOption(const std::string& option_name) const;
 
   const OptionValue& GetOption(const std::string& option_name) const;

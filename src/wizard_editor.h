@@ -20,6 +20,7 @@ class wxSlider;
 class wxTextCtrl;
 class wxBoxSizer;
 class WizardEditor;
+class World;
 
 class FormOption {
  public:
@@ -29,6 +30,8 @@ class FormOption {
   void PopulateFromWorld();
 
  private:
+  friend class WizardEditor;
+
   void OnRangeSliderChanged(wxCommandEvent& event);
   void OnNamedRangeChanged(wxCommandEvent& event);
   void OnSelectChanged(wxCommandEvent& event);
@@ -47,6 +50,8 @@ class WizardEditor : public wxScrolledWindow {
  public:
   WizardEditor(wxWindow* parent, const GameDefinitions* game_definitions);
 
+  void LoadWorld(World* world);
+
  private:
   friend class FormOption;
 
@@ -54,11 +59,12 @@ class WizardEditor : public wxScrolledWindow {
 
   void Populate();
 
+  void OnChangeName(wxCommandEvent& event);
   void OnChangeGame(wxCommandEvent& event);
 
   const GameDefinitions* game_definitions_;
 
-  World world_;
+  World* world_ = nullptr;
 
   wxTextCtrl* name_box_;
   wxChoice* game_box_;

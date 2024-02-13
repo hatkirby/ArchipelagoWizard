@@ -8,3 +8,9 @@ WorldWindow::WorldWindow(wxWindow* parent,
   wizard_editor_ = new WizardEditor(this, game_definitions_);
   AddPage(wizard_editor_, "Wizard", true);
 }
+
+void WorldWindow::LoadWorld(World* world) {
+  world_ = world;
+
+  wizard_editor_->LoadWorld(world_);
+}

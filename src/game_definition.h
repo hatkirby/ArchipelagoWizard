@@ -17,7 +17,7 @@ enum OptionType {
 };
 
 struct OptionDefinition {
-  OptionType type;
+  OptionType type = kUNKNOWN_OPTION_TYPE;
   bool named_range = false;
 
   std::string name;
