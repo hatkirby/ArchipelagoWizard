@@ -20,10 +20,12 @@ struct OptionValue {
 
 class World {
  public:
-  void Load(const std::string& filename,
-            const GameDefinitions* game_definitions);
+  explicit World(const GameDefinitions* game_definitions)
+      : game_definitions_(game_definitions) {}
 
-  void Save();
+  void Load(const std::string& filename);
+
+  void Save(const std::string& filename);
 
   const std::string& GetName() const { return name_; }
 
@@ -35,7 +37,7 @@ class World {
 
   void SetGame(const std::string& game);
 
-  void UnsetGame() { game_ = std::nullopt; }
+  void UnsetGame();
 
   bool HasOption(const std::string& option_name) const;
 
@@ -50,6 +52,8 @@ class World {
   }
 
  private:
+  const GameDefinitions* game_definitions_;
+
   std::string name_;
   std::optional<std::string> game_;
   std::map<std::string, OptionValue> options_;

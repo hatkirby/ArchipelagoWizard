@@ -60,7 +60,7 @@ WizardFrame::WizardFrame()
 }
 
 void WizardFrame::OnNewWorld(wxCommandEvent& event) {
-  InitializeWorld(std::make_unique<World>());
+  InitializeWorld(std::make_unique<World>(game_definitions_.get()));
 }
 
 void WizardFrame::OnLoadWorld(wxCommandEvent& event) {
@@ -73,9 +73,9 @@ void WizardFrame::OnLoadWorld(wxCommandEvent& event) {
   }
 
   try {
-    std::unique_ptr<World> load_world = std::make_unique<World>();
-    load_world->Load(openFileDialog.GetPath().ToStdString(),
-                     game_definitions_.get());
+    std::unique_ptr<World> load_world =
+        std::make_unique<World>(game_definitions_.get());
+    load_world->Load(openFileDialog.GetPath().ToStdString());
 
     InitializeWorld(std::move(load_world));
   } catch (const std::exception& ex) {
@@ -83,7 +83,24 @@ void WizardFrame::OnLoadWorld(wxCommandEvent& event) {
   }
 }
 
-void WizardFrame::OnSaveWorld(wxCommandEvent& event) {}
+void WizardFrame::OnSaveWorld(wxCommandEvent& event) {
+  wxFileDialog saveFileDialog(this, "Save World YAML", "", "",
+                              "YAML files (*.yaml;*.yml)|*.yaml;*.yml",
+                              wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+
+  if (saveFileDialog.ShowModal() == wxID_CANCEL) {
+    return;
+  }
+
+  try {
+    const WorldEntryData* data = dynamic_cast<WorldEntryData*>(
+        world_list_->GetItemData(world_list_->GetSelection()));
+    World& world = *worlds_.at(data->index);
+    world.Save(saveFileDialog.GetPath().ToStdString());
+  } catch (const std::exception& ex) {
+    wxMessageBox(ex.what(), "Error saving World", wxOK, this);
+  }
+}
 
 void WizardFrame::OnExit(wxCommandEvent& event) { Close(true); }
 

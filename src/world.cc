@@ -1,9 +1,10 @@
 #include "world.h"
 
+#include <fstream>
+
 #include "wizard_frame.h"
 
-void World::Load(const std::string& filename,
-                 const GameDefinitions* game_definitions) {
+void World::Load(const std::string& filename) {
   yaml_ = YAML::LoadFile(filename);
 
   if (yaml_["name"]) {
@@ -16,7 +17,7 @@ void World::Load(const std::string& filename,
 
     if (yaml_[*game_]) {
       const YAML::Node& game_node = yaml_[*game_];
-      const Game& game = game_definitions->GetGame(*game_);
+      const Game& game = game_definitions_->GetGame(*game_);
 
       for (const OptionDefinition& option : game.GetOptions()) {
         if (game_node[option.name]) {
@@ -46,13 +47,36 @@ void World::Load(const std::string& filename,
 void World::SetName(std::string name) {
   name_ = name;
 
+  yaml_["name"] = name_;
+
   if (meta_update_callback_) {
     meta_update_callback_();
   }
 }
 
+void World::Save(const std::string& filename) {
+  std::ofstream file_stream(filename);
+  file_stream << yaml_;
+}
+
 void World::SetGame(const std::string& game) {
+  UnsetGame();
+
   game_ = game;
+  yaml_["game"] = game;
+
+  if (meta_update_callback_) {
+    meta_update_callback_();
+  }
+}
+
+void World::UnsetGame() {
+  if (yaml_[*game_]) {
+    yaml_.remove(*game_);
+  }
+
+  game_ = std::nullopt;
+  options_.clear();
 
   if (meta_update_callback_) {
     meta_update_callback_();
@@ -69,9 +93,24 @@ const OptionValue& World::GetOption(const std::string& option_name) const {
 
 void World::SetOption(const std::string& option_name,
                       OptionValue option_value) {
+  const Game& game = game_definitions_->GetGame(*game_);
+  const OptionDefinition& option = game.GetOption(option_name);
+
+  if (option.type == kSelectOption) {
+    yaml_[*game_][option_name] = option_value.string_value;
+  } else if (option.type == kRangeOption) {
+    yaml_[*game_][option_name] = option_value.int_value;
+  } else if (option.type == kListOption) {
+    // TODO: Handle list options.
+  }
+
   options_[option_name] = std::move(option_value);
 }
 
 void World::UnsetOption(const std::string& option_name) {
   options_.erase(option_name);
+
+  if (yaml_[*game_] && yaml_[*game_][option_name]) {
+    yaml_[*game_].remove(option_name);
+  }
 }
