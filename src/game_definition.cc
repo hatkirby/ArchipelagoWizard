@@ -34,6 +34,18 @@ GameDefinitions::GameDefinitions() {
         }
 
         option.default_choice = option_data["defaultValue"];
+      } else if (option_data["type"] == "custom-list") {
+        option.type = kListOption;
+
+        for (const auto& choice : option_data["options"]) {
+          option.choices.Append(choice, choice);
+          option.default_list_choices.push_back(false);
+        }
+
+        for (const auto& default_value : option_data["defaultValue"]) {
+          option.default_list_choices[option.choices.GetKeyId(default_value)] =
+              true;
+        }
       } else if (option_data["type"] == "range" ||
                  option_data["type"] == "named_range") {
         option.type = kRangeOption;

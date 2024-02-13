@@ -14,6 +14,7 @@ enum OptionType {
   kUNKNOWN_OPTION_TYPE,
   kRangeOption,
   kSelectOption,
+  kListOption,
 };
 
 struct OptionDefinition {
@@ -31,6 +32,8 @@ struct OptionDefinition {
 
   std::string default_choice;
   OrderedBijection<std::string, std::string> choices;  // id, display name
+
+  std::vector<bool> default_list_choices;
 };
 
 class Game {

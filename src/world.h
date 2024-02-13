@@ -4,11 +4,13 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <vector>
 
 struct OptionValue {
   bool random = false;
   std::string string_value;
   int int_value = 0;
+  std::vector<bool> list_values;
 };
 
 class World {

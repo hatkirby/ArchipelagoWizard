@@ -7,6 +7,7 @@
 #include <wx/wx.h>
 #endif
 
+#include <wx/checklst.h>
 #include <wx/scrolwin.h>
 
 #include <list>
@@ -35,6 +36,7 @@ class FormOption {
   void OnRangeSliderChanged(wxCommandEvent& event);
   void OnNamedRangeChanged(wxCommandEvent& event);
   void OnSelectChanged(wxCommandEvent& event);
+  void OnListItemChecked(wxCommandEvent& event);
 
   void SaveToWorld();
 
@@ -44,6 +46,7 @@ class FormOption {
   wxChoice* combo_box_ = nullptr;
   wxSlider* slider_ = nullptr;
   wxStaticText* label_ = nullptr;
+  wxCheckListBox* list_box_ = nullptr;
 };
 
 class WizardEditor : public wxScrolledWindow {

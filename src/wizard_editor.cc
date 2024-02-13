@@ -35,7 +35,7 @@ WizardEditor::WizardEditor(wxWindow* parent,
   top_sizer_->Add(form_sizer, wxSizerFlags().DoubleBorder().Expand());
   top_sizer_->Add(new wxStaticLine(this));
 
-  SetScrollRate(5, 5);
+  SetScrollRate(20, 20);
 
   Rebuild();
 }
@@ -167,6 +167,17 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
     }
 
     sizer->Add(final_sizer, wxSizerFlags().Expand());
+  } else if (game_option.type == kListOption) {
+    list_box_ = new wxCheckListBox(parent_->other_options_, wxID_ANY);
+
+    for (const auto& [value_id, value_display] :
+         game_option.choices.GetItems()) {
+      list_box_->Append(value_display);
+    }
+
+    list_box_->Bind(wxEVT_CHECKLISTBOX, &FormOption::OnListItemChecked, this);
+
+    sizer->Add(list_box_, wxSizerFlags().Expand());
   } else {
     sizer->Add(0, 0);
   }
@@ -198,6 +209,14 @@ void FormOption::PopulateFromWorld() {
         findstr = "Custom";
       }
       combo_box_->SetSelection(combo_box_->FindString(*findstr));
+    }
+  } else if (game_option.type == kListOption) {
+    const std::vector<bool>& option_values =
+        parent_->world_->HasOption(option_name_)
+            ? parent_->world_->GetOption(option_name_).list_values
+            : game_option.default_list_choices;
+    for (int i = 0; i < option_values.size(); i++) {
+      list_box_->Check(i, option_values.at(i));
     }
   }
 }
@@ -261,6 +280,8 @@ void FormOption::OnNamedRangeChanged(wxCommandEvent& event) {
 
 void FormOption::OnSelectChanged(wxCommandEvent& event) { SaveToWorld(); }
 
+void FormOption::OnListItemChecked(wxCommandEvent& event) { SaveToWorld(); }
+
 void FormOption::SaveToWorld() {
   const Game& game =
       parent_->game_definitions_->GetGame(parent_->world_->GetGame());
@@ -272,6 +293,10 @@ void FormOption::SaveToWorld() {
         game_option.choices.GetItems().at(combo_box_->GetSelection()));
   } else if (game_option.type == kRangeOption) {
     new_value.int_value = slider_->GetValue();
+  } else if (game_option.type == kListOption) {
+    for (int i = 0; i < game_option.choices.GetItems().size(); i++) {
+      new_value.list_values.push_back(list_box_->IsChecked(i));
+    }
   }
 
   parent_->world_->SetOption(option_name_, std::move(new_value));
