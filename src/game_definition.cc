@@ -30,7 +30,7 @@ GameDefinitions::GameDefinitions() {
         option.type = kSelectOption;
 
         for (const auto& choice : option_data["options"]) {
-          option.choices.emplace_back(choice["value"], choice["name"]);
+          option.choices.Append(choice["value"], choice["name"]);
         }
 
         option.default_choice = option_data["defaultValue"];
@@ -46,7 +46,7 @@ GameDefinitions::GameDefinitions() {
 
           for (const auto& [value_name, value_value] :
                option_data["value_names"].items()) {
-            option.value_names.emplace_back(value_value, value_name);
+            option.value_names.Append(value_value, value_name);
           }
         }
       }

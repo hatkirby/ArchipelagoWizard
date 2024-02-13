@@ -51,69 +51,13 @@ void WizardEditor::Rebuild() {
     options_form_sizer->AddGrowableCol(1);
 
     for (const OptionDefinition& game_option : game.GetOptions()) {
-      form_options_.emplace_back();
-      FormOption& form_option = form_options_.back();
-      form_option.option_name = game_option.name;
-
       wxStaticText* option_label =
           new wxStaticText(other_options_, wxID_ANY, "");
       option_label->SetLabelText(game_option.display_name + ":");
       options_form_sizer->Add(option_label,
                               wxSizerFlags().Align(wxALIGN_TOP | wxALIGN_LEFT));
 
-      if (game_option.type == kSelectOption) {
-        form_option.combo_box = new wxChoice(other_options_, wxID_ANY);
-
-        for (const auto& [value_id, value_display] : game_option.choices) {
-          form_option.combo_box->Append(value_display);
-        }
-
-        options_form_sizer->Add(form_option.combo_box, wxSizerFlags().Expand());
-      } else if (game_option.type == kRangeOption) {
-        form_option.slider = new wxSlider(
-            other_options_, wxID_ANY, game_option.default_range_value,
-            game_option.min_value, game_option.max_value);
-        form_option.slider->Bind(
-            wxEVT_SLIDER, &FormOption::OnRangeSliderChanged, &form_option);
-
-        form_option.label = new wxStaticText(other_options_, wxID_ANY, "");
-
-        wxFlexGridSizer* range_sizer = new wxFlexGridSizer(2, 10, 10);
-        range_sizer->AddGrowableCol(0);
-
-        range_sizer->Add(form_option.slider, wxSizerFlags().Expand());
-        range_sizer->Add(form_option.label,
-                         wxSizerFlags().Align(wxALIGN_RIGHT));
-
-        wxSizer* final_sizer = range_sizer;
-
-        if (game_option.named_range) {
-          for (const auto& [value_value, value_name] :
-               game_option.value_names) {
-            form_option.named_values[value_value] = value_name;
-          }
-
-          form_option.combo_box = new wxChoice(other_options_, wxID_ANY);
-
-          for (const auto& [value_value, value_name] :
-               game_option.value_names) {
-            form_option.combo_box->Append(value_name);
-          }
-          form_option.combo_box->Append("Custom");
-
-          form_option.combo_box->Bind(
-              wxEVT_CHOICE, &FormOption::OnNamedRangeChanged, &form_option);
-
-          wxBoxSizer* named_sizer = new wxBoxSizer(wxVERTICAL);
-          named_sizer->Add(form_option.combo_box, wxSizerFlags().Expand());
-          named_sizer->AddSpacer(5);
-          named_sizer->Add(range_sizer, wxSizerFlags().Expand());
-
-          final_sizer = named_sizer;
-        }
-
-        options_form_sizer->Add(final_sizer, wxSizerFlags().Expand());
-      }
+      form_options_.emplace_back(this, game_option.name, options_form_sizer);
     }
 
     other_options_->SetSizerAndFit(options_form_sizer);
@@ -130,35 +74,8 @@ void WizardEditor::Rebuild() {
 void WizardEditor::Populate() {
   if (!world_.HasGame()) return;
 
-  const Game& game = game_definitions_->GetGame(world_.GetGame());
-
   for (FormOption& form_option : form_options_) {
-    const OptionDefinition& game_option =
-        game.GetOption(form_option.option_name);
-
-    if (game_option.type == kSelectOption) {
-      std::string str_sel =
-          world_.HasOption(form_option.option_name)
-              ? world_.GetOption(form_option.option_name).string_value
-              : game_option.default_choice;
-      form_option.combo_box->SetSelection(
-          form_option.combo_box->FindString(str_sel));
-    } else if (game_option.type == kRangeOption) {
-      int int_sel = world_.HasOption(form_option.option_name)
-                        ? world_.GetOption(form_option.option_name).int_value
-                        : game_option.default_range_value;
-      form_option.slider->SetValue(int_sel);
-      form_option.label->SetLabel(std::to_string(int_sel));
-
-      if (game_option.named_range) {
-        std::string findstr = "Custom";
-        if (form_option.named_values.count(int_sel)) {
-          findstr = form_option.named_values.at(int_sel);
-        }
-        form_option.combo_box->SetSelection(
-            form_option.combo_box->FindString(findstr));
-      }
-    }
+    form_option.PopulateFromWorld();
   }
 }
 
@@ -168,46 +85,164 @@ void WizardEditor::OnChangeGame(wxCommandEvent& event) {
   Rebuild();
 }
 
-void FormOption::OnRangeSliderChanged(wxCommandEvent& event) {
-  if (slider == nullptr || label == nullptr) {
-    return;
-  }
+FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
+                       wxSizer* sizer)
+    : parent_(parent), option_name_(option_name) {
+  const Game& game =
+      parent_->game_definitions_->GetGame(parent_->world_.GetGame());
+  const OptionDefinition& game_option = game.GetOption(option_name_);
 
-  label->SetLabel(std::to_string(slider->GetValue()));
-  label->GetContainingSizer()->Layout();
+  if (game_option.type == kSelectOption) {
+    combo_box_ = new wxChoice(parent_->other_options_, wxID_ANY);
 
-  if (combo_box != nullptr) {
-    std::string should_name = "Custom";
-    if (named_values.count(slider->GetValue())) {
-      should_name = named_values.at(slider->GetValue());
+    for (const auto& [value_id, value_display] :
+         game_option.choices.GetItems()) {
+      combo_box_->Append(value_display);
     }
 
-    int selection = combo_box->FindString(should_name);
-    if (combo_box->GetSelection() != selection) {
-      combo_box->SetSelection(selection);
+    combo_box_->Bind(wxEVT_CHOICE, &FormOption::OnSelectChanged, this);
+
+    sizer->Add(combo_box_, wxSizerFlags().Expand());
+  } else if (game_option.type == kRangeOption) {
+    slider_ = new wxSlider(parent_->other_options_, wxID_ANY,
+                           game_option.default_range_value,
+                           game_option.min_value, game_option.max_value);
+    slider_->Bind(wxEVT_SLIDER, &FormOption::OnRangeSliderChanged, this);
+
+    label_ = new wxStaticText(parent_->other_options_, wxID_ANY, "");
+
+    wxFlexGridSizer* range_sizer = new wxFlexGridSizer(2, 10, 10);
+    range_sizer->AddGrowableCol(0);
+
+    range_sizer->Add(slider_, wxSizerFlags().Expand());
+    range_sizer->Add(label_, wxSizerFlags().Align(wxALIGN_RIGHT));
+
+    wxSizer* final_sizer = range_sizer;
+
+    if (game_option.named_range) {
+      combo_box_ = new wxChoice(parent_->other_options_, wxID_ANY);
+
+      for (const auto& [value_value, value_name] :
+           game_option.value_names.GetItems()) {
+        combo_box_->Append(value_name);
+      }
+      combo_box_->Append("Custom");
+
+      combo_box_->Bind(wxEVT_CHOICE, &FormOption::OnNamedRangeChanged, this);
+
+      wxBoxSizer* named_sizer = new wxBoxSizer(wxVERTICAL);
+      named_sizer->Add(combo_box_, wxSizerFlags().Expand());
+      named_sizer->AddSpacer(5);
+      named_sizer->Add(range_sizer, wxSizerFlags().Expand());
+
+      final_sizer = named_sizer;
+    }
+
+    sizer->Add(final_sizer, wxSizerFlags().Expand());
+  }
+}
+
+void FormOption::PopulateFromWorld() {
+  const Game& game =
+      parent_->game_definitions_->GetGame(parent_->world_.GetGame());
+  const OptionDefinition& game_option = game.GetOption(option_name_);
+
+  if (game_option.type == kSelectOption) {
+    std::string str_sel =
+        parent_->world_.HasOption(option_name_)
+            ? parent_->world_.GetOption(option_name_).string_value
+            : game_option.default_choice;
+    int index = game_option.choices.GetKeyId(str_sel);
+    combo_box_->SetSelection(index);
+  } else if (game_option.type == kRangeOption) {
+    int int_sel = parent_->world_.HasOption(option_name_)
+                      ? parent_->world_.GetOption(option_name_).int_value
+                      : game_option.default_range_value;
+    slider_->SetValue(int_sel);
+    label_->SetLabel(std::to_string(int_sel));
+
+    if (game_option.named_range) {
+      std::optional<std::string> findstr =
+          game_option.value_names.GetByKeyOptional(int_sel);
+      if (!findstr) {
+        findstr = "Custom";
+      }
+      combo_box_->SetSelection(combo_box_->FindString(*findstr));
     }
   }
 }
 
-void FormOption::OnNamedRangeChanged(wxCommandEvent& event) {
-  if (combo_box == nullptr || slider == nullptr) {
+void FormOption::OnRangeSliderChanged(wxCommandEvent& event) {
+  if (slider_ == nullptr || label_ == nullptr) {
     return;
   }
 
-  int result = slider->GetValue();
-  for (const auto& [value_value, value_name] : named_values) {
-    if (value_name == combo_box->GetString(combo_box->GetSelection())) {
-      result = value_value;
-      break;
+  label_->SetLabel(std::to_string(slider_->GetValue()));
+  label_->GetContainingSizer()->Layout();
+
+  if (combo_box_ != nullptr) {
+    const Game& game =
+        parent_->game_definitions_->GetGame(parent_->world_.GetGame());
+    const OptionDefinition& game_option = game.GetOption(option_name_);
+
+    std::optional<std::string> findstr =
+        game_option.value_names.GetByKeyOptional(slider_->GetValue());
+    if (!findstr) {
+      findstr = "Custom";
+    }
+
+    int selection = combo_box_->FindString(*findstr);
+    if (combo_box_->GetSelection() != selection) {
+      combo_box_->SetSelection(selection);
     }
   }
 
-  if (result != slider->GetValue()) {
-    slider->SetValue(result);
+  SaveToWorld();
+}
 
-    if (label != nullptr) {
-      label->SetLabel(std::to_string(slider->GetValue()));
-      label->GetContainingSizer()->Layout();
-    }
+void FormOption::OnNamedRangeChanged(wxCommandEvent& event) {
+  if (combo_box_ == nullptr || slider_ == nullptr) {
+    return;
   }
+
+  const Game& game =
+      parent_->game_definitions_->GetGame(parent_->world_.GetGame());
+  const OptionDefinition& game_option = game.GetOption(option_name_);
+
+  std::string str_sel =
+      combo_box_->GetString(combo_box_->GetSelection()).ToStdString();
+  std::optional<int> result =
+      game_option.value_names.GetByValueOptional(str_sel);
+  if (!result) {
+    result = slider_->GetValue();
+  }
+
+  if (result != slider_->GetValue()) {
+    slider_->SetValue(*result);
+
+    if (label_ != nullptr) {
+      label_->SetLabel(std::to_string(slider_->GetValue()));
+      label_->GetContainingSizer()->Layout();
+    }
+
+    SaveToWorld();
+  }
+}
+
+void FormOption::OnSelectChanged(wxCommandEvent& event) { SaveToWorld(); }
+
+void FormOption::SaveToWorld() {
+  const Game& game =
+      parent_->game_definitions_->GetGame(parent_->world_.GetGame());
+  const OptionDefinition& game_option = game.GetOption(option_name_);
+
+  OptionValue new_value;
+  if (game_option.type == kSelectOption) {
+    new_value.string_value = std::get<0>(
+        game_option.choices.GetItems().at(combo_box_->GetSelection()));
+  } else if (game_option.type == kRangeOption) {
+    new_value.int_value = slider_->GetValue();
+  }
+
+  parent_->world_.SetOption(option_name_, std::move(new_value));
 }

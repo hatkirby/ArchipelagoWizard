@@ -19,17 +19,28 @@ class wxChoice;
 class wxSlider;
 class wxTextCtrl;
 class wxBoxSizer;
+class WizardEditor;
 
-struct FormOption {
-  std::string option_name;
-  wxChoice* combo_box = nullptr;
-  wxSlider* slider = nullptr;
-  wxStaticText* label = nullptr;
+class FormOption {
+ public:
+  FormOption(WizardEditor* parent, const std::string& option_name,
+             wxSizer* sizer);
 
-  std::map<int, std::string> named_values;
+  void PopulateFromWorld();
 
+ private:
   void OnRangeSliderChanged(wxCommandEvent& event);
   void OnNamedRangeChanged(wxCommandEvent& event);
+  void OnSelectChanged(wxCommandEvent& event);
+
+  void SaveToWorld();
+
+  WizardEditor* parent_;
+
+  std::string option_name_;
+  wxChoice* combo_box_ = nullptr;
+  wxSlider* slider_ = nullptr;
+  wxStaticText* label_ = nullptr;
 };
 
 class WizardEditor : public wxScrolledWindow {
@@ -37,6 +48,8 @@ class WizardEditor : public wxScrolledWindow {
   WizardEditor(wxWindow* parent, const GameDefinitions* game_definitions);
 
  private:
+  friend class FormOption;
+
   void Rebuild();
 
   void Populate();

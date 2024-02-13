@@ -2,10 +2,13 @@
 #define GAME_DEFINITION_H_10B5D32A
 
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <tuple>
 #include <vector>
+
+#include "ordered_bijection.h"
 
 enum OptionType {
   kUNKNOWN_OPTION_TYPE,
@@ -24,11 +27,10 @@ struct OptionDefinition {
   int default_range_value = 0;
   int min_value = 0;
   int max_value = 0;
-  std::vector<std::tuple<int, std::string>> value_names;  // value, display name
+  OrderedBijection<int, std::string> value_names;  // value, display name
 
   std::string default_choice;
-  std::vector<std::tuple<std::string, std::string>>
-      choices;  // id, display name
+  OrderedBijection<std::string, std::string> choices;  // id, display name
 };
 
 class Game {
