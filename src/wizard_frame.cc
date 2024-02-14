@@ -84,19 +84,24 @@ void WizardFrame::OnLoadWorld(wxCommandEvent& event) {
 }
 
 void WizardFrame::OnSaveWorld(wxCommandEvent& event) {
-  wxFileDialog saveFileDialog(this, "Save World YAML", "", "",
-                              "YAML files (*.yaml;*.yml)|*.yaml;*.yml",
-                              wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+  const WorldEntryData* data = dynamic_cast<WorldEntryData*>(
+      world_list_->GetItemData(world_list_->GetSelection()));
+  World& world = *worlds_.at(data->index);
 
-  if (saveFileDialog.ShowModal() == wxID_CANCEL) {
-    return;
+  if (!world.HasFilename()) {
+    wxFileDialog saveFileDialog(this, "Save World YAML", "", "",
+                                "YAML files (*.yaml;*.yml)|*.yaml;*.yml",
+                                wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+
+    if (saveFileDialog.ShowModal() == wxID_CANCEL) {
+      return;
+    }
+
+    world.SetFilename(saveFileDialog.GetPath().ToStdString());
   }
 
   try {
-    const WorldEntryData* data = dynamic_cast<WorldEntryData*>(
-        world_list_->GetItemData(world_list_->GetSelection()));
-    World& world = *worlds_.at(data->index);
-    world.Save(saveFileDialog.GetPath().ToStdString());
+    world.Save(world.GetFilename());
   } catch (const std::exception& ex) {
     wxMessageBox(ex.what(), "Error saving World", wxOK, this);
   }

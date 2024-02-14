@@ -7,6 +7,7 @@
 
 void World::Load(const std::string& filename) {
   yaml_ = YAML::LoadFile(filename);
+  filename_ = filename;
 
   PopulateFromYaml();
 }

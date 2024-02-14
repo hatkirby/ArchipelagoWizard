@@ -27,6 +27,12 @@ class World {
 
   void Save(const std::string& filename);
 
+  bool HasFilename() const { return filename_.has_value(); }
+
+  const std::string& GetFilename() const { return *filename_; }
+
+  void SetFilename(const std::string& val) { filename_ = val; }
+
   void FromYaml(const std::string& text);
 
   std::string ToYaml() const;
@@ -65,6 +71,8 @@ class World {
   std::string name_;
   std::optional<std::string> game_;
   std::map<std::string, OptionValue> options_;
+
+  std::optional<std::string> filename_;
 
   YAML::Node yaml_;
 
