@@ -93,6 +93,11 @@ void WizardEditor::Rebuild() {
   SetSizer(top_sizer_);
   Layout();
   FitInside();
+
+  wxWindow* frame = wxGetTopLevelParent(this);
+  frame->SetMinSize(frame->GetSize());
+  frame->Fit();
+  frame->SetMinSize(wxSize(728, 728 / 2));
 }
 
 void WizardEditor::Populate() {

@@ -57,6 +57,10 @@ WizardFrame::WizardFrame()
   splitter_window_->SplitVertically(world_list_, world_window_, 250);
 
   world_window_->Hide();
+
+  wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+  sizer->Add(splitter_window_, wxSizerFlags().Proportion(1).Expand());
+  SetSizer(sizer);
 }
 
 void WizardFrame::OnNewWorld(wxCommandEvent& event) {
