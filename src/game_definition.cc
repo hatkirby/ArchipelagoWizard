@@ -5,14 +5,14 @@
 #include <nlohmann/json.hpp>
 
 GameDefinitions::GameDefinitions() {
-  std::ifstream datafile("weighted-options.json");
+  std::ifstream datafile("dumped-options.json");
   nlohmann::ordered_json all_games = nlohmann::ordered_json::parse(datafile);
 
-  for (const auto& [game_name, game_data] : all_games["games"].items()) {
+  for (const auto& [game_name, game_data] : all_games.items()) {
     std::vector<OptionDefinition> options;
 
     for (const auto& [option_name, option_data] :
-         game_data["gameSettings"].items()) {
+         game_data["options"].items()) {
       OptionDefinition option;
       option.name = option_name;
 
@@ -34,7 +34,7 @@ GameDefinitions::GameDefinitions() {
         }
 
         option.default_choice = option_data["defaultValue"];
-      } else if (option_data["type"] == "custom-list") {
+      } else if (option_data["type"] == "options-set") {
         option.type = kListOption;
 
         for (const auto& choice : option_data["options"]) {
