@@ -227,17 +227,24 @@ void FormOption::PopulateFromWorld() {
   const OptionDefinition& game_option = game.GetOption(option_name_);
 
   if (game_option.type == kSelectOption) {
-    if (parent_->world_->HasOption(option_name_) &&
-        parent_->world_->GetOption(option_name_).random) {
+    bool is_random = false;
+    std::string str_sel;
+
+    if (parent_->world_->HasOption(option_name_)) {
+      const OptionValue& ov = parent_->world_->GetOption(option_name_);
+      is_random = ov.random;
+      str_sel = ov.string_value;
+    } else {
+      is_random = game_option.default_random;
+      str_sel = game_option.default_choice;
+    }
+
+    if (is_random) {
       combo_box_->Disable();
       random_button_->SetValue(true);
     } else {
       random_button_->SetValue(false);
 
-      std::string str_sel =
-          parent_->world_->HasOption(option_name_)
-              ? parent_->world_->GetOption(option_name_).string_value
-              : game_option.default_choice;
       int index = game_option.choices.GetKeyId(str_sel);
       combo_box_->SetSelection(index);
       combo_box_->Enable();
@@ -335,6 +342,7 @@ void FormOption::OnRandomClicked(wxCommandEvent& event) {
   const OptionDefinition& game_option = game.GetOption(option_name_);
 
   OptionValue option_value;
+  option_value.random = game_option.default_random;
   if (parent_->world_->HasOption(option_name_)) {
     option_value = parent_->world_->GetOption(option_name_);
   }
@@ -348,9 +356,23 @@ void FormOption::OnRandomClicked(wxCommandEvent& event) {
     }
 
     OptionValue dlg_value = rcd.GetOptionValue();
+
+    // If randomization was just turned off, we need to choose a value to
+    // fall back to. If the default is non-random, then we can just unset the
+    // option, because that's basically the same as setting the default. If the
+    // default is random, arbitrarily select the first choice.
+    //
+    // If randomization is still on, just copy the option value from the dialog
+    // into the world.
     if (!dlg_value.random) {
       if (option_value.random) {
-        parent_->world_->UnsetOption(option_name_);
+        if (game_option.default_random) {
+          dlg_value.string_value =
+              std::get<0>(game_option.choices.GetItems().at(0));
+          parent_->world_->SetOption(option_name_, dlg_value);
+        } else {
+          parent_->world_->UnsetOption(option_name_);
+        }
       }
     } else {
       parent_->world_->SetOption(option_name_, dlg_value);

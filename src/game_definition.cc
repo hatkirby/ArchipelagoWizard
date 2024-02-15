@@ -34,6 +34,10 @@ GameDefinitions::GameDefinitions() {
         }
 
         option.default_choice = option_data["defaultValue"];
+
+        if (option.default_choice == "random") {
+          option.default_random = true;
+        }
       } else if (option_data["type"] == "options-set") {
         option.type = kSetOption;
 

@@ -20,6 +20,7 @@ enum OptionType {
 struct OptionDefinition {
   OptionType type = kUNKNOWN_OPTION_TYPE;
   bool named_range = false;
+  bool default_random = false;
 
   std::string name;
   std::string display_name;
