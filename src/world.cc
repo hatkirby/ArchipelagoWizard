@@ -76,8 +76,20 @@ void World::SetOption(const std::string& option_name,
   const Game& game = game_definitions_->GetGame(*game_);
   const OptionDefinition& option = game.GetOption(option_name);
 
+  yaml_[*game_].remove(option_name);
   if (option.type == kSelectOption) {
-    yaml_[*game_][option_name] = option_value.string_value;
+    if (option_value.random) {
+      if (option_value.weighting.empty()) {
+        yaml_[*game_][option_name] = "random";
+      } else {
+        for (const OptionValue& weight_value : option_value.weighting) {
+          yaml_[*game_][option_name][weight_value.string_value] =
+              weight_value.weight;
+        }
+      }
+    } else {
+      yaml_[*game_][option_name] = option_value.string_value;
+    }
   } else if (option.type == kRangeOption) {
     yaml_[*game_][option_name] = option_value.int_value;
   } else if (option.type == kListOption) {
@@ -113,10 +125,35 @@ void World::PopulateFromYaml() {
       for (const OptionDefinition& option : game.GetOptions()) {
         if (game_node[option.name]) {
           if (option.type == kSelectOption) {
-            std::string str_val = game_node[option.name].as<std::string>();
-            if (option.choices.HasKey(str_val)) {
+            if (game_node[option.name].IsScalar()) {
+              std::string str_val = game_node[option.name].as<std::string>();
+              if (option.choices.HasKey(str_val)) {
+                OptionValue option_value;
+                option_value.string_value = str_val;
+
+                options_[option.name] = std::move(option_value);
+              } else if (str_val == "random") {
+                OptionValue option_value;
+                option_value.random = true;
+
+                options_[option.name] = std::move(option_value);
+              }
+            } else if (game_node[option.name].IsMap()) {
               OptionValue option_value;
-              option_value.string_value = str_val;
+              option_value.random = true;
+
+              for (YAML::const_iterator it = game_node[option.name].begin();
+                   it != game_node[option.name].end(); it++) {
+                std::string str_val = it->first.as<std::string>();
+                int weight_val = it->second.as<int>();
+                if (option.choices.HasKey(str_val)) {
+                  OptionValue sub_option_value;
+                  sub_option_value.string_value = str_val;
+                  sub_option_value.weight = weight_val;
+
+                  option_value.weighting.push_back(std::move(sub_option_value));
+                }
+              }
 
               options_[option.name] = std::move(option_value);
             }

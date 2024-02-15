@@ -1,7 +1,9 @@
 #include "wizard_editor.h"
 
 #include <wx/statline.h>
+#include <wx/tglbtn.h>
 
+#include "random_choice_dialog.h"
 #include "world.h"
 
 enum WizardEditorIds { ID_CONNECT = 1, ID_CHECK_FOR_UPDATES = 2 };
@@ -71,7 +73,7 @@ void WizardEditor::Rebuild() {
 
     const Game& game = game_definitions_->GetGame(world_->GetGame());
 
-    wxFlexGridSizer* options_form_sizer = new wxFlexGridSizer(2, 10, 10);
+    wxFlexGridSizer* options_form_sizer = new wxFlexGridSizer(3, 10, 10);
     options_form_sizer->AddGrowableCol(1);
 
     for (const OptionDefinition& game_option : game.GetOptions()) {
@@ -140,6 +142,8 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
       parent_->game_definitions_->GetGame(parent_->world_->GetGame());
   const OptionDefinition& game_option = game.GetOption(option_name_);
 
+  bool randomizable = false;
+
   if (game_option.type == kSelectOption) {
     combo_box_ = new wxChoice(parent_->other_options_, wxID_ANY);
 
@@ -149,8 +153,9 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
     }
 
     combo_box_->Bind(wxEVT_CHOICE, &FormOption::OnSelectChanged, this);
-
     sizer->Add(combo_box_, wxSizerFlags().Expand());
+
+    randomizable = true;
   } else if (game_option.type == kRangeOption) {
     slider_ = new wxSlider(parent_->other_options_, wxID_ANY,
                            game_option.default_range_value,
@@ -187,6 +192,8 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
     }
 
     sizer->Add(final_sizer, wxSizerFlags().Expand());
+
+    // randomizable = true;
   } else if (game_option.type == kListOption) {
     list_box_ = new wxCheckListBox(parent_->other_options_, wxID_ANY);
 
@@ -201,6 +208,17 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
   } else {
     sizer->Add(0, 0);
   }
+
+  if (randomizable) {
+    random_button_ =
+        new wxToggleButton(parent_->other_options_, wxID_ANY, "🎲",
+                           wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+    random_button_->Bind(wxEVT_TOGGLEBUTTON, &FormOption::OnRandomClicked,
+                         this);
+    sizer->Add(random_button_);
+  } else {
+    sizer->Add(0, 0);
+  }
 }
 
 void FormOption::PopulateFromWorld() {
@@ -209,12 +227,21 @@ void FormOption::PopulateFromWorld() {
   const OptionDefinition& game_option = game.GetOption(option_name_);
 
   if (game_option.type == kSelectOption) {
-    std::string str_sel =
-        parent_->world_->HasOption(option_name_)
-            ? parent_->world_->GetOption(option_name_).string_value
-            : game_option.default_choice;
-    int index = game_option.choices.GetKeyId(str_sel);
-    combo_box_->SetSelection(index);
+    if (parent_->world_->HasOption(option_name_) &&
+        parent_->world_->GetOption(option_name_).random) {
+      combo_box_->Disable();
+      random_button_->SetValue(true);
+    } else {
+      random_button_->SetValue(false);
+
+      std::string str_sel =
+          parent_->world_->HasOption(option_name_)
+              ? parent_->world_->GetOption(option_name_).string_value
+              : game_option.default_choice;
+      int index = game_option.choices.GetKeyId(str_sel);
+      combo_box_->SetSelection(index);
+      combo_box_->Enable();
+    }
   } else if (game_option.type == kRangeOption) {
     int int_sel = parent_->world_->HasOption(option_name_)
                       ? parent_->world_->GetOption(option_name_).int_value
@@ -301,6 +328,37 @@ void FormOption::OnNamedRangeChanged(wxCommandEvent& event) {
 void FormOption::OnSelectChanged(wxCommandEvent& event) { SaveToWorld(); }
 
 void FormOption::OnListItemChecked(wxCommandEvent& event) { SaveToWorld(); }
+
+void FormOption::OnRandomClicked(wxCommandEvent& event) {
+  const Game& game =
+      parent_->game_definitions_->GetGame(parent_->world_->GetGame());
+  const OptionDefinition& game_option = game.GetOption(option_name_);
+
+  OptionValue option_value;
+  if (parent_->world_->HasOption(option_name_)) {
+    option_value = parent_->world_->GetOption(option_name_);
+  }
+
+  random_button_->SetValue(option_value.random);
+
+  if (game_option.type == kSelectOption) {
+    RandomChoiceDialog rcd(&game_option, option_value);
+    if (rcd.ShowModal() != wxID_OK) {
+      return;
+    }
+
+    OptionValue dlg_value = rcd.GetOptionValue();
+    if (!dlg_value.random) {
+      if (option_value.random) {
+        parent_->world_->UnsetOption(option_name_);
+      }
+    } else {
+      parent_->world_->SetOption(option_name_, dlg_value);
+    }
+  }
+
+  PopulateFromWorld();
+}
 
 void FormOption::SaveToWorld() {
   const Game& game =

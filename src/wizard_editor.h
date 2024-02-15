@@ -20,6 +20,7 @@ class wxChoice;
 class wxSlider;
 class wxTextCtrl;
 class wxBoxSizer;
+class wxToggleButton;
 class WizardEditor;
 class World;
 
@@ -37,6 +38,7 @@ class FormOption {
   void OnNamedRangeChanged(wxCommandEvent& event);
   void OnSelectChanged(wxCommandEvent& event);
   void OnListItemChecked(wxCommandEvent& event);
+  void OnRandomClicked(wxCommandEvent& event);
 
   void SaveToWorld();
 
@@ -47,6 +49,7 @@ class FormOption {
   wxSlider* slider_ = nullptr;
   wxStaticText* label_ = nullptr;
   wxCheckListBox* list_box_ = nullptr;
+  wxToggleButton* random_button_ = nullptr;
 };
 
 class WizardEditor : public wxScrolledWindow {
