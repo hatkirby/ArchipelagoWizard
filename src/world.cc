@@ -92,8 +92,8 @@ void World::SetOption(const std::string& option_name,
     }
   } else if (option.type == kRangeOption) {
     yaml_[*game_][option_name] = option_value.int_value;
-  } else if (option.type == kListOption) {
-    // TODO: Handle list options.
+  } else if (option.type == kSetOption) {
+    // TODO: Handle set options.
   }
 
   options_[option_name] = std::move(option_value);
@@ -163,8 +163,8 @@ void World::PopulateFromYaml() {
             option_value.int_value = int_val;
 
             options_[option.name] = std::move(option_value);
-          } else if (option.type == kListOption) {
-            // TODO: Read list options
+          } else if (option.type == kSetOption) {
+            // TODO: Read set options
           }
         }
       }

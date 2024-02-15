@@ -35,15 +35,15 @@ GameDefinitions::GameDefinitions() {
 
         option.default_choice = option_data["defaultValue"];
       } else if (option_data["type"] == "options-set") {
-        option.type = kListOption;
+        option.type = kSetOption;
 
         for (const auto& choice : option_data["options"]) {
           option.choices.Append(choice, choice);
-          option.default_list_choices.push_back(false);
+          option.default_set_choices.push_back(false);
         }
 
         for (const auto& default_value : option_data["defaultValue"]) {
-          option.default_list_choices[option.choices.GetKeyId(default_value)] =
+          option.default_set_choices[option.choices.GetKeyId(default_value)] =
               true;
         }
       } else if (option_data["type"] == "range" ||

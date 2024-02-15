@@ -194,7 +194,7 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
     sizer->Add(final_sizer, wxSizerFlags().Expand());
 
     // randomizable = true;
-  } else if (game_option.type == kListOption) {
+  } else if (game_option.type == kSetOption) {
     list_box_ = new wxCheckListBox(parent_->other_options_, wxID_ANY);
 
     for (const auto& [value_id, value_display] :
@@ -257,11 +257,11 @@ void FormOption::PopulateFromWorld() {
       }
       combo_box_->SetSelection(combo_box_->FindString(*findstr));
     }
-  } else if (game_option.type == kListOption) {
+  } else if (game_option.type == kSetOption) {
     const std::vector<bool>& option_values =
         parent_->world_->HasOption(option_name_)
-            ? parent_->world_->GetOption(option_name_).list_values
-            : game_option.default_list_choices;
+            ? parent_->world_->GetOption(option_name_).set_values
+            : game_option.default_set_choices;
     for (int i = 0; i < option_values.size(); i++) {
       list_box_->Check(i, option_values.at(i));
     }
@@ -371,9 +371,9 @@ void FormOption::SaveToWorld() {
         game_option.choices.GetItems().at(combo_box_->GetSelection()));
   } else if (game_option.type == kRangeOption) {
     new_value.int_value = slider_->GetValue();
-  } else if (game_option.type == kListOption) {
+  } else if (game_option.type == kSetOption) {
     for (int i = 0; i < game_option.choices.GetItems().size(); i++) {
-      new_value.list_values.push_back(list_box_->IsChecked(i));
+      new_value.set_values.push_back(list_box_->IsChecked(i));
     }
   }
 

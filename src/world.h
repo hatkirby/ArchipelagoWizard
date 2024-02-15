@@ -15,7 +15,7 @@ struct OptionValue {
   bool random = false;
   std::string string_value;
   int int_value = 0;
-  std::vector<bool> list_values;
+  std::vector<bool> set_values;
 
   int weight = 50;
   std::vector<OptionValue> weighting;
