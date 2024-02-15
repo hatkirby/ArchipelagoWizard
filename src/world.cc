@@ -105,6 +105,10 @@ void World::UnsetOption(const std::string& option_name) {
   if (yaml_[*game_] && yaml_[*game_][option_name]) {
     yaml_[*game_].remove(option_name);
   }
+
+  if (yaml_[*game_].IsMap() && yaml_[*game_].size() == 0) {
+    yaml_.remove(*game_);
+  }
 }
 
 void World::PopulateFromYaml() {
