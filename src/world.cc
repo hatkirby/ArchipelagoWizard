@@ -51,7 +51,7 @@ void World::SetGame(const std::string& game) {
 }
 
 void World::UnsetGame() {
-  if (yaml_[*game_]) {
+  if (game_ && yaml_[*game_]) {
     yaml_.remove(*game_);
   }
 

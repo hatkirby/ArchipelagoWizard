@@ -12,7 +12,7 @@
 
 #include "world.h"
 
-class OptionDefinition;
+struct OptionDefinition;
 
 class RandomChoiceDialog : public wxDialog {
  public:
