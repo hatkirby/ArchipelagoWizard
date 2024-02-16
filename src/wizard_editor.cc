@@ -210,8 +210,9 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
   }
 
   if (randomizable) {
-    random_button_ =
-        new wxToggleButton(parent_->other_options_, wxID_ANY, "🎲",
+    std::string dice = "\xf0\x9f\x8e\xb2";
+    random_button_ = new wxToggleButton(
+        parent_->other_options_, wxID_ANY, wxString::FromUTF8(dice),
                            wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
     random_button_->Bind(wxEVT_TOGGLEBUTTON, &FormOption::OnRandomClicked,
                          this);
