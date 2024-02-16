@@ -1,5 +1,7 @@
 #include "random_range_dialog.h"
 
+#include <wx/spinctrl.h>
+
 #include "game_definition.h"
 #include "world.h"
 
@@ -259,6 +261,34 @@ RandomRangeDialog::RandomRangeDialog(const OptionDefinition* option_definition,
 
   weighted_sizer_ = new wxFlexGridSizer(4, 10, 10);
   weighted_sizer_->AddGrowableCol(1);
+
+  // Add a control for adding static value rows.
+  wxSpinCtrl* add_static_spin = new wxSpinCtrl(
+      weighted_box_sizer->GetStaticBox(), wxID_ANY, "", wxDefaultPosition,
+      wxDefaultSize, wxSP_ARROW_KEYS, option_definition->min_value,
+      option_definition->max_value, option_definition->min_value);
+  wxButton* add_static_button =
+      new wxButton(weighted_box_sizer->GetStaticBox(), wxID_ANY, "Add");
+  add_static_button->Bind(wxEVT_BUTTON, [this, add_static_spin,
+                                         weighted_box_sizer](wxCommandEvent&) {
+    RrdValue rrd_value;
+    rrd_value.static_value = add_static_spin->GetValue();
+
+    if (weights_.count(rrd_value)) {
+      wxMessageBox("This option is already in the form.");
+      return;
+    }
+
+    AddWeightRow(rrd_value, weighted_box_sizer->GetStaticBox(),
+                 weighted_sizer_);
+    Layout();
+    Fit();
+  });
+
+  weighted_sizer_->Add(add_static_spin, wxSizerFlags().Expand());
+  weighted_sizer_->Add(add_static_button);
+  weighted_sizer_->Add(0, 0);
+  weighted_sizer_->Add(0, 0);
 
   weighted_box_sizer->Add(weighted_sizer_,
                           wxSizerFlags().Proportion(1).Expand());
