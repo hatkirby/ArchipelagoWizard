@@ -7,19 +7,10 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <vector>
 
-class GameDefinitions;
-
-struct OptionValue {
-  bool random = false;
-  std::string string_value;
-  int int_value = 0;
-  std::vector<bool> set_values;
-
-  int weight = 50;
-  std::vector<OptionValue> weighting;
-};
+#include "game_definition.h"
 
 class World {
  public:

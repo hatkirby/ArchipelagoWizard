@@ -4,6 +4,8 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
+#include "util.h"
+
 GameDefinitions::GameDefinitions() {
   std::ifstream datafile("dumped-options.json");
   nlohmann::ordered_json all_games = nlohmann::ordered_json::parse(datafile);
@@ -33,27 +35,26 @@ GameDefinitions::GameDefinitions() {
           option.choices.Append(choice["value"], choice["name"]);
         }
 
-        option.default_choice = option_data["defaultValue"];
-
-        if (option.default_choice == "random") {
-          option.default_random = true;
+        if (option_data["defaultValue"] == "random") {
+          option.default_value.random = true;
+        } else {
+          option.default_value.string_value = option_data["defaultValue"];
         }
       } else if (option_data["type"] == "options-set") {
         option.type = kSetOption;
 
         for (const auto& choice : option_data["options"]) {
           option.choices.Append(choice, choice);
-          option.default_set_choices.push_back(false);
+          option.default_value.set_values.push_back(false);
         }
 
         for (const auto& default_value : option_data["defaultValue"]) {
-          option.default_set_choices[option.choices.GetKeyId(default_value)] =
-              true;
+          option.default_value
+              .set_values[option.choices.GetKeyId(default_value)] = true;
         }
       } else if (option_data["type"] == "range" ||
                  option_data["type"] == "named_range") {
         option.type = kRangeOption;
-        option.default_range_value = option_data["defaultValue"];
         option.min_value = option_data["min"];
         option.max_value = option_data["max"];
 
@@ -64,6 +65,19 @@ GameDefinitions::GameDefinitions() {
                option_data["value_names"].items()) {
             option.value_names.Append(value_value, value_name);
           }
+        }
+
+        if (option_data["defaultValue"].is_string()) {
+          std::string default_value = option_data["defaultValue"];
+          if (default_value.starts_with("random")) {
+            option.default_value =
+                GetRandomOptionValueFromString(default_value);
+          } else if (option.value_names.HasValue(default_value)) {
+            option.default_value.int_value =
+                option.value_names.GetByValue(default_value);
+          }
+        } else if (option_data["defaultValue"].is_number()) {
+          option.default_value.int_value = option_data["defaultValue"];
         }
       }
 

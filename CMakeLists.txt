@@ -23,6 +23,8 @@ add_executable(ap_wizard
   src/wizard_editor.cc
   src/yaml_editor.cc
   src/random_choice_dialog.cc
+  src/random_range_dialog.cc
+  src/util.cc
 )
 set_property(TARGET ap_wizard PROPERTY CXX_STANDARD 20)
 set_property(TARGET ap_wizard PROPERTY CXX_STANDARD_REQUIRED ON)

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 
+#include "util.h"
 #include "wizard_frame.h"
 
 void World::Load(const std::string& filename) {
@@ -91,7 +92,24 @@ void World::SetOption(const std::string& option_name,
       yaml_[*game_][option_name] = option_value.string_value;
     }
   } else if (option.type == kRangeOption) {
-    yaml_[*game_][option_name] = option_value.int_value;
+    if (option_value.random) {
+      if (option_value.weighting.empty()) {
+        yaml_[*game_][option_name] = RandomOptionValueToString(option_value);
+      } else {
+        for (const OptionValue& weight_value : option_value.weighting) {
+          if (weight_value.random) {
+            yaml_[*game_][option_name]
+                 [RandomOptionValueToString(weight_value)] =
+                     weight_value.weight;
+          } else {
+            yaml_[*game_][option_name][weight_value.int_value] =
+                weight_value.weight;
+          }
+        }
+      }
+    } else {
+      yaml_[*game_][option_name] = option_value.int_value;
+    }
   } else if (option.type == kSetOption) {
     // TODO: Handle set options.
   }
@@ -162,9 +180,15 @@ void World::PopulateFromYaml() {
               options_[option.name] = std::move(option_value);
             }
           } else if (option.type == kRangeOption) {
-            int int_val = game_node[option.name].as<int>();
             OptionValue option_value;
-            option_value.int_value = int_val;
+
+            std::string str_val = game_node[option.name].as<std::string>();
+            if (str_val.starts_with("random")) {
+              option_value = GetRandomOptionValueFromString(str_val);
+            } else {
+              int int_val = game_node[option.name].as<int>();
+              option_value.int_value = int_val;
+            }
 
             options_[option.name] = std::move(option_value);
           } else if (option.type == kSetOption) {

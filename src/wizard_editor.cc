@@ -4,6 +4,7 @@
 #include <wx/tglbtn.h>
 
 #include "random_choice_dialog.h"
+#include "random_range_dialog.h"
 #include "world.h"
 
 enum WizardEditorIds { ID_CONNECT = 1, ID_CHECK_FOR_UPDATES = 2 };
@@ -158,7 +159,7 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
     randomizable = true;
   } else if (game_option.type == kRangeOption) {
     slider_ = new wxSlider(parent_->other_options_, wxID_ANY,
-                           game_option.default_range_value,
+                           game_option.default_value.int_value,
                            game_option.min_value, game_option.max_value);
     slider_->Bind(wxEVT_SLIDER, &FormOption::OnRangeSliderChanged, this);
 
@@ -193,7 +194,7 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
 
     sizer->Add(final_sizer, wxSizerFlags().Expand());
 
-    // randomizable = true;
+    randomizable = true;
   } else if (game_option.type == kSetOption) {
     list_box_ = new wxCheckListBox(parent_->other_options_, wxID_ANY);
 
@@ -213,7 +214,7 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
     std::string dice = "\xf0\x9f\x8e\xb2";
     random_button_ = new wxToggleButton(
         parent_->other_options_, wxID_ANY, wxString::FromUTF8(dice),
-                           wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+        wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
     random_button_->Bind(wxEVT_TOGGLEBUTTON, &FormOption::OnRandomClicked,
                          this);
     sizer->Add(random_button_);
@@ -227,51 +228,47 @@ void FormOption::PopulateFromWorld() {
       parent_->game_definitions_->GetGame(parent_->world_->GetGame());
   const OptionDefinition& game_option = game.GetOption(option_name_);
 
+  const OptionValue& ov = parent_->world_->HasOption(option_name_)
+                              ? parent_->world_->GetOption(option_name_)
+                              : game_option.default_value;
+
   if (game_option.type == kSelectOption) {
-    bool is_random = false;
-    std::string str_sel;
-
-    if (parent_->world_->HasOption(option_name_)) {
-      const OptionValue& ov = parent_->world_->GetOption(option_name_);
-      is_random = ov.random;
-      str_sel = ov.string_value;
-    } else {
-      is_random = game_option.default_random;
-      str_sel = game_option.default_choice;
-    }
-
-    if (is_random) {
+    if (ov.random) {
       combo_box_->Disable();
       random_button_->SetValue(true);
     } else {
       random_button_->SetValue(false);
 
-      int index = game_option.choices.GetKeyId(str_sel);
+      int index = game_option.choices.GetKeyId(ov.string_value);
       combo_box_->SetSelection(index);
       combo_box_->Enable();
     }
   } else if (game_option.type == kRangeOption) {
-    int int_sel = parent_->world_->HasOption(option_name_)
-                      ? parent_->world_->GetOption(option_name_).int_value
-                      : game_option.default_range_value;
-    slider_->SetValue(int_sel);
-    label_->SetLabel(std::to_string(int_sel));
+    if (ov.random) {
+      slider_->Disable();
+      random_button_->SetValue(true);
 
-    if (game_option.named_range) {
-      std::optional<std::string> findstr =
-          game_option.value_names.GetByKeyOptional(int_sel);
-      if (!findstr) {
-        findstr = "Custom";
+      if (game_option.named_range) {
+        combo_box_->Disable();
       }
-      combo_box_->SetSelection(combo_box_->FindString(*findstr));
+    } else {
+      slider_->Enable();
+      slider_->SetValue(ov.int_value);
+      label_->SetLabel(std::to_string(ov.int_value));
+
+      if (game_option.named_range) {
+        std::optional<std::string> findstr =
+            game_option.value_names.GetByKeyOptional(ov.int_value);
+        if (!findstr) {
+          findstr = "Custom";
+        }
+        combo_box_->SetSelection(combo_box_->FindString(*findstr));
+        combo_box_->Enable();
+      }
     }
   } else if (game_option.type == kSetOption) {
-    const std::vector<bool>& option_values =
-        parent_->world_->HasOption(option_name_)
-            ? parent_->world_->GetOption(option_name_).set_values
-            : game_option.default_set_choices;
-    for (int i = 0; i < option_values.size(); i++) {
-      list_box_->Check(i, option_values.at(i));
+    for (int i = 0; i < ov.set_values.size(); i++) {
+      list_box_->Check(i, ov.set_values.at(i));
     }
   }
 }
@@ -342,12 +339,10 @@ void FormOption::OnRandomClicked(wxCommandEvent& event) {
       parent_->game_definitions_->GetGame(parent_->world_->GetGame());
   const OptionDefinition& game_option = game.GetOption(option_name_);
 
-  OptionValue option_value;
-  option_value.random = game_option.default_random;
-  if (parent_->world_->HasOption(option_name_)) {
-    option_value = parent_->world_->GetOption(option_name_);
-  }
-
+  const OptionValue& option_value =
+      parent_->world_->HasOption(option_name_)
+          ? parent_->world_->GetOption(option_name_)
+          : game_option.default_value;
   random_button_->SetValue(option_value.random);
 
   if (game_option.type == kSelectOption) {
@@ -367,9 +362,36 @@ void FormOption::OnRandomClicked(wxCommandEvent& event) {
     // into the world.
     if (!dlg_value.random) {
       if (option_value.random) {
-        if (game_option.default_random) {
+        if (game_option.default_value.random) {
           dlg_value.string_value =
               std::get<0>(game_option.choices.GetItems().at(0));
+          parent_->world_->SetOption(option_name_, dlg_value);
+        } else {
+          parent_->world_->UnsetOption(option_name_);
+        }
+      }
+    } else {
+      parent_->world_->SetOption(option_name_, dlg_value);
+    }
+  } else if (game_option.type == kRangeOption) {
+    RandomRangeDialog rrd(&game_option, option_value);
+    if (rrd.ShowModal() != wxID_OK) {
+      return;
+    }
+
+    OptionValue dlg_value = rrd.GetOptionValue();
+
+    // If randomization was just turned off, we need to choose a value to
+    // fall back to. If the default is non-random, then we can just unset the
+    // option, because that's basically the same as setting the default. If the
+    // default is random, arbitrarily select the minimum value.
+    //
+    // If randomization is still on, just copy the option value from the dialog
+    // into the world.
+    if (!dlg_value.random) {
+      if (option_value.random) {
+        if (game_option.default_value.random) {
+          dlg_value.int_value = game_option.min_value;
           parent_->world_->SetOption(option_name_, dlg_value);
         } else {
           parent_->world_->UnsetOption(option_name_);

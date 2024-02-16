@@ -17,24 +17,42 @@ enum OptionType {
   kSetOption,
 };
 
+enum RandomValueType {
+  kUNKNOWN_RANDOM_VALUE_TYPE,
+  kUniformRandom,
+  kLowRandom,
+  kMiddleRandom,
+  kHighRandom,
+};
+
+struct OptionValue {
+  bool random = false;
+  std::string string_value;
+  int int_value = 0;
+  std::vector<bool> set_values;
+
+  int weight = 50;
+  std::vector<OptionValue> weighting;
+
+  RandomValueType range_random_type = kUNKNOWN_RANDOM_VALUE_TYPE;
+  std::optional<std::tuple<int, int>> range_subset;  // low, high
+};
+
 struct OptionDefinition {
   OptionType type = kUNKNOWN_OPTION_TYPE;
   bool named_range = false;
-  bool default_random = false;
 
   std::string name;
   std::string display_name;
   std::string description;
 
-  int default_range_value = 0;
   int min_value = 0;
   int max_value = 0;
   OrderedBijection<int, std::string> value_names;  // value, display name
 
-  std::string default_choice;
   OrderedBijection<std::string, std::string> choices;  // id, display name
 
-  std::vector<bool> default_set_choices;
+  OptionValue default_value;
 };
 
 class Game {

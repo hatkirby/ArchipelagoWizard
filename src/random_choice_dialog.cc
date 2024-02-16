@@ -1,7 +1,5 @@
 #include "random_choice_dialog.h"
 
-#include <wx/dataview.h>
-
 #include "game_definition.h"
 #include "world.h"
 
@@ -20,7 +18,7 @@ RandomChoiceDialog::RandomChoiceDialog(
     }
 
     if (option_value.weighting.empty() &&
-        option_id == option_definition->default_choice) {
+        option_id == option_definition->default_value.string_value) {
       weights_[option_id] = 50;
     } else {
       weights_[option_id] = 0;
