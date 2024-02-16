@@ -6,6 +6,39 @@
 #include "util.h"
 #include "wizard_frame.h"
 
+namespace {
+
+OptionValue OptionValueForChoiceValue(const OptionDefinition& option,
+                                      const YAML::Node& node) {
+  OptionValue option_value;
+
+  std::string str_val = node.as<std::string>();
+  if (option.choices.HasKey(str_val)) {
+    option_value.string_value = str_val;
+  } else if (str_val == "random") {
+    option_value.random = true;
+  }
+
+  return option_value;
+}
+
+OptionValue OptionValueForRangeValue(const OptionDefinition& option,
+                                     const YAML::Node& node) {
+  OptionValue option_value;
+
+  std::string str_val = node.as<std::string>();
+  if (str_val.starts_with("random")) {
+    option_value = GetRandomOptionValueFromString(str_val);
+  } else {
+    int int_val = node.as<int>();
+    option_value.int_value = int_val;
+  }
+
+  return option_value;
+}
+
+}  // namespace
+
 void World::Load(const std::string& filename) {
   yaml_ = YAML::LoadFile(filename);
   filename_ = filename;
@@ -146,19 +179,15 @@ void World::PopulateFromYaml() {
 
       for (const OptionDefinition& option : game.GetOptions()) {
         if (game_node[option.name]) {
-          if (option.type == kSelectOption) {
+          if (option.type == kSelectOption || option.type == kRangeOption) {
+            // Choices and ranges can both be weighted.
             if (game_node[option.name].IsScalar()) {
-              std::string str_val = game_node[option.name].as<std::string>();
-              if (option.choices.HasKey(str_val)) {
-                OptionValue option_value;
-                option_value.string_value = str_val;
-
-                options_[option.name] = std::move(option_value);
-              } else if (str_val == "random") {
-                OptionValue option_value;
-                option_value.random = true;
-
-                options_[option.name] = std::move(option_value);
+              if (option.type == kSelectOption) {
+                options_[option.name] =
+                    OptionValueForChoiceValue(option, game_node[option.name]);
+              } else if (option.type == kRangeOption) {
+                options_[option.name] =
+                    OptionValueForRangeValue(option, game_node[option.name]);
               }
             } else if (game_node[option.name].IsMap()) {
               OptionValue option_value;
@@ -166,31 +195,22 @@ void World::PopulateFromYaml() {
 
               for (YAML::const_iterator it = game_node[option.name].begin();
                    it != game_node[option.name].end(); it++) {
-                std::string str_val = it->first.as<std::string>();
-                int weight_val = it->second.as<int>();
-                if (option.choices.HasKey(str_val)) {
-                  OptionValue sub_option_value;
-                  sub_option_value.string_value = str_val;
-                  sub_option_value.weight = weight_val;
-
-                  option_value.weighting.push_back(std::move(sub_option_value));
+                OptionValue sub_option_value;
+                if (option.type == kSelectOption) {
+                  sub_option_value =
+                      OptionValueForChoiceValue(option, it->first);
+                } else if (option.type == kRangeOption) {
+                  sub_option_value =
+                      OptionValueForRangeValue(option, it->first);
                 }
+
+                sub_option_value.weight = it->second.as<int>();
+
+                option_value.weighting.push_back(std::move(sub_option_value));
               }
 
               options_[option.name] = std::move(option_value);
             }
-          } else if (option.type == kRangeOption) {
-            OptionValue option_value;
-
-            std::string str_val = game_node[option.name].as<std::string>();
-            if (str_val.starts_with("random")) {
-              option_value = GetRandomOptionValueFromString(str_val);
-            } else {
-              int int_val = game_node[option.name].as<int>();
-              option_value.int_value = int_val;
-            }
-
-            options_[option.name] = std::move(option_value);
           } else if (option.type == kSetOption) {
             // TODO: Read set options
           }
