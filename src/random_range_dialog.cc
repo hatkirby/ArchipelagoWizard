@@ -306,6 +306,12 @@ RandomRangeDialog::RandomRangeDialog(const OptionDefinition* option_definition,
         if (enable_range_subset_->GetValue()) {
           rrd_value.min = subset_min_->GetValue();
           rrd_value.max = subset_max_->GetValue();
+
+          if (rrd_value.min >= rrd_value.max) {
+            wxMessageBox(
+                "The range maximum must be greater than the range minimum.");
+            return;
+          }
         }
 
         if (weights_.count(rrd_value)) {
