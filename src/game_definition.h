@@ -36,6 +36,8 @@ struct OptionValue {
 
   RandomValueType range_random_type = kUNKNOWN_RANDOM_VALUE_TYPE;
   std::optional<std::tuple<int, int>> range_subset;  // low, high
+
+  std::optional<std::string> error;
 };
 
 struct OptionDefinition {

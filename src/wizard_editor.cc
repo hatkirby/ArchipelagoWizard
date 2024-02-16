@@ -233,20 +233,35 @@ void FormOption::PopulateFromWorld() {
                               : game_option.default_value;
 
   if (game_option.type == kSelectOption) {
-    if (ov.random) {
+    if (ov.error) {
+      combo_box_->Disable();
+      random_button_->Disable();
+      random_button_->SetValue(false);
+    } else if (ov.random) {
       combo_box_->Disable();
       random_button_->SetValue(true);
+      random_button_->Enable();
     } else {
       random_button_->SetValue(false);
+      random_button_->Enable();
 
       int index = game_option.choices.GetKeyId(ov.string_value);
       combo_box_->SetSelection(index);
       combo_box_->Enable();
     }
   } else if (game_option.type == kRangeOption) {
-    if (ov.random) {
+    if (ov.error) {
+      slider_->Disable();
+      random_button_->Disable();
+      random_button_->SetValue(false);
+
+      if (game_option.named_range) {
+        combo_box_->Disable();
+      }
+    } else if (ov.random) {
       slider_->Disable();
       random_button_->SetValue(true);
+      random_button_->Enable();
 
       if (game_option.named_range) {
         combo_box_->Disable();
@@ -255,6 +270,8 @@ void FormOption::PopulateFromWorld() {
       slider_->Enable();
       slider_->SetValue(ov.int_value);
       label_->SetLabel(std::to_string(ov.int_value));
+      random_button_->Enable();
+      random_button_->SetValue(false);
 
       if (game_option.named_range) {
         std::optional<std::string> findstr =
@@ -267,8 +284,14 @@ void FormOption::PopulateFromWorld() {
       }
     }
   } else if (game_option.type == kSetOption) {
-    for (int i = 0; i < ov.set_values.size(); i++) {
-      list_box_->Check(i, ov.set_values.at(i));
+    if (ov.error) {
+      list_box_->Disable();
+    } else {
+      list_box_->Enable();
+
+      for (int i = 0; i < ov.set_values.size(); i++) {
+        list_box_->Check(i, ov.set_values.at(i));
+      }
     }
   }
 }

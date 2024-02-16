@@ -17,6 +17,8 @@ OptionValue OptionValueForChoiceValue(const OptionDefinition& option,
     option_value.string_value = str_val;
   } else if (str_val == "random") {
     option_value.random = true;
+  } else {
+    option_value.error = "Unknown value.";
   }
 
   return option_value;
@@ -30,8 +32,17 @@ OptionValue OptionValueForRangeValue(const OptionDefinition& option,
   if (str_val.starts_with("random")) {
     option_value = GetRandomOptionValueFromString(str_val);
   } else {
-    int int_val = node.as<int>();
-    option_value.int_value = int_val;
+    try {
+      option_value.int_value = node.as<int>();
+
+      if (option_value.int_value < option.min_value) {
+        option_value.error = "Value is too small.";
+      } else if (option_value.int_value > option.max_value) {
+        option_value.error = "Value is too large.";
+      }
+    } catch (const std::exception&) {
+      option_value.error = "Value is not numeric or random.";
+    }
   }
 
   return option_value;
@@ -204,7 +215,12 @@ void World::PopulateFromYaml() {
                       OptionValueForRangeValue(option, it->first);
                 }
 
-                sub_option_value.weight = it->second.as<int>();
+                try {
+                  sub_option_value.weight = it->second.as<int>();
+                } catch (const std::exception&) {
+                  option_value.error = "Invalid weight value.";
+                  break;
+                }
 
                 option_value.weighting.push_back(std::move(sub_option_value));
               }

@@ -24,7 +24,12 @@ OptionValue GetRandomOptionValueFromString(std::string descriptor) {
     is_range = true;
 
     it++;
+
     // It's an error for there to be no parts after "range".
+    if (it == parts.size()) {
+      result.error = "Ranged random specifier missing min and max values.";
+      return result;
+    }
   }
 
   if (parts[it] == "low" || parts[it] == "middle" || parts[it] == "high") {
@@ -37,17 +42,27 @@ OptionValue GetRandomOptionValueFromString(std::string descriptor) {
     }
 
     it++;
-
-    if (it == parts.size()) {
-      return result;
-    }
   }
 
   if (is_range) {
+    if (it == parts.size()) {
+      result.error = "Ranged random specifier missing min and max values.";
+      return result;
+    }
+
+    if (it + 1 == parts.size()) {
+      result.error = "Ranged random specifier missing max value.";
+      return result;
+    }
+
     int min = std::stoi(parts[it]);
     int max = std::stoi(parts[it + 1]);
 
     result.range_subset = std::tuple<int, int>(min, max);
+  }
+
+  if (it != parts.size()) {
+    result.error = "Malformed random specifier.";
   }
 
   return result;
