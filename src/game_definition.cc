@@ -13,6 +13,22 @@ GameDefinitions::GameDefinitions() {
   for (const auto& [game_name, game_data] : all_games.items()) {
     std::vector<OptionDefinition> options;
 
+    DoubleMap<std::string> game_items;
+    for (const auto& item_name : game_data["itemGroups"]) {
+      game_items.Append(item_name);
+    }
+    for (const auto& item_name : game_data["items"]) {
+      game_items.Append(item_name);
+    }
+
+    DoubleMap<std::string> game_locations;
+    for (const auto& location_name : game_data["locationGroups"]) {
+      game_locations.Append(location_name);
+    }
+    for (const auto& location_name : game_data["locations"]) {
+      game_locations.Append(location_name);
+    }
+
     for (const auto& [option_name, option_data] :
          game_data["options"].items()) {
       OptionDefinition option;
@@ -42,6 +58,7 @@ GameDefinitions::GameDefinitions() {
         }
       } else if (option_data["type"] == "options-set") {
         option.type = kSetOption;
+        option.set_type = kCustomSet;
 
         for (const auto& choice : option_data["options"]) {
           option.choices.Append(choice, choice);
@@ -51,6 +68,24 @@ GameDefinitions::GameDefinitions() {
         for (const auto& default_value : option_data["defaultValue"]) {
           option.default_value
               .set_values[option.choices.GetKeyId(default_value)] = true;
+        }
+      } else if (option_data["type"] == "items-set") {
+        option.type = kSetOption;
+        option.set_type = kItemSet;
+        option.default_value.set_values.resize(game_items.size());
+
+        for (const auto& default_value : option_data["defaultValue"]) {
+          option.default_value.set_values[game_items.GetId(default_value)] =
+              true;
+        }
+      } else if (option_data["type"] == "locations-set") {
+        option.type = kSetOption;
+        option.set_type = kLocationSet;
+        option.default_value.set_values.resize(game_locations.size());
+
+        for (const auto& default_value : option_data["defaultValue"]) {
+          option.default_value.set_values[game_locations.GetId(default_value)] =
+              true;
         }
       } else if (option_data["type"] == "range" ||
                  option_data["type"] == "named_range") {
@@ -87,7 +122,9 @@ GameDefinitions::GameDefinitions() {
     std::cout << "Read " << options.size() << " options for " << game_name
               << std::endl;
     games_.emplace(std::piecewise_construct, std::forward_as_tuple(game_name),
-                   std::forward_as_tuple(game_name, std::move(options)));
+                   std::forward_as_tuple(game_name, std::move(options),
+                                         std::move(game_items),
+                                         std::move(game_locations)));
     all_games_.insert(game_name);
   }
 }

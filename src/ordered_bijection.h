@@ -46,6 +46,12 @@ class OrderedBijection {
 
   size_t GetValueId(const V& value) const { return values_.at(value); }
 
+  const K& GetKeyById(size_t id) const { return std::get<0>(ordering_.at(id)); }
+
+  const V& GetValueById(size_t id) const {
+    return std::get<1>(ordering_.at(id));
+  }
+
  private:
   std::vector<std::tuple<K, V>> ordering_;
   std::map<K, V> forward_;

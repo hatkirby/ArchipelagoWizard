@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "double_map.h"
 #include "ordered_bijection.h"
 
 enum OptionType {
@@ -15,6 +16,13 @@ enum OptionType {
   kRangeOption,
   kSelectOption,
   kSetOption,
+};
+
+enum SetType {
+  kUNKNOWN_SET_TYPE,
+  kCustomSet,
+  kItemSet,
+  kLocationSet,
 };
 
 enum RandomValueType {
@@ -52,6 +60,7 @@ struct OptionDefinition {
   int max_value = 0;
   OrderedBijection<int, std::string> value_names;  // value, display name
 
+  SetType set_type = kUNKNOWN_SET_TYPE;
   OrderedBijection<std::string, std::string> choices;  // id, display name
 
   OptionValue default_value;
@@ -59,8 +68,12 @@ struct OptionDefinition {
 
 class Game {
  public:
-  Game(std::string name, std::vector<OptionDefinition> options)
-      : name_(std::move(name)), options_(std::move(options)) {
+  Game(std::string name, std::vector<OptionDefinition> options,
+       DoubleMap<std::string> items, DoubleMap<std::string> locations)
+      : name_(std::move(name)),
+        options_(std::move(options)),
+        items_(std::move(items)),
+        locations_(std::move(locations)) {
     for (const OptionDefinition& option : options_) {
       options_by_name_[option.name] = option;
     }
@@ -74,10 +87,16 @@ class Game {
     return options_by_name_.at(option_name);
   }
 
+  const DoubleMap<std::string>& GetItems() const { return items_; }
+
+  const DoubleMap<std::string>& GetLocations() const { return locations_; }
+
  private:
   std::string name_;
   std::vector<OptionDefinition> options_;
   std::map<std::string, OptionDefinition> options_by_name_;
+  DoubleMap<std::string> items_;
+  DoubleMap<std::string> locations_;
 };
 
 class GameDefinitions {

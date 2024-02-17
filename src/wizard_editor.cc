@@ -198,9 +198,19 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
   } else if (game_option.type == kSetOption) {
     list_box_ = new wxCheckListBox(parent_->other_options_, wxID_ANY);
 
-    for (const auto& [value_id, value_display] :
-         game_option.choices.GetItems()) {
-      list_box_->Append(value_display);
+    if (game_option.set_type == kCustomSet) {
+      for (const auto& [value_id, value_display] :
+           game_option.choices.GetItems()) {
+        list_box_->Append(value_display);
+      }
+    } else if (game_option.set_type == kItemSet) {
+      for (const std::string& name : game.GetItems().GetList()) {
+        list_box_->Append(name);
+      }
+    } else if (game_option.set_type == kLocationSet) {
+      for (const std::string& name : game.GetLocations().GetList()) {
+        list_box_->Append(name);
+      }
     }
 
     list_box_->Bind(wxEVT_CHECKLISTBOX, &FormOption::OnListItemChecked, this);
@@ -440,7 +450,7 @@ void FormOption::SaveToWorld() {
   } else if (game_option.type == kRangeOption) {
     new_value.int_value = slider_->GetValue();
   } else if (game_option.type == kSetOption) {
-    for (int i = 0; i < game_option.choices.GetItems().size(); i++) {
+    for (int i = 0; i < list_box_->GetCount(); i++) {
       new_value.set_values.push_back(list_box_->IsChecked(i));
     }
   }
