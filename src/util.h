@@ -1,6 +1,7 @@
 #ifndef UTIL_H_84145E76
 #define UTIL_H_84145E76
 
+#include <iterator>
 #include <string>
 
 #include "game_definition.h"
