@@ -37,9 +37,19 @@ class RandomRangeDialog : public wxDialog {
 
  private:
   void OnModeChanged(wxCommandEvent& event);
+  void OnDeleteClicked(wxCommandEvent& event);
 
   void AddWeightRow(const RrdValue& value, wxWindow* parent, wxSizer* sizer,
                     int default_value = 0, int deleteable = true);
+
+  struct WeightRow {
+    wxStaticText* header_label;
+    wxStaticText* row_label;
+    wxButton* delete_button;
+    wxSlider* row_slider;
+
+    int weight = -1;
+  };
 
   wxRadioBox* modes_box_;
 
@@ -53,7 +63,8 @@ class RandomRangeDialog : public wxDialog {
   wxPanel* weighted_panel_;
   wxFlexGridSizer* weighted_sizer_;
 
-  std::map<RrdValue, int> weights_;
+  std::map<RrdValue, WeightRow> weights_;
+  std::map<wxWindowID, RrdValue> value_by_delete_button_id_;
 };
 
 #endif /* end of include guard: RANDOM_RANGE_DIALOG_H_A3AEEBE5 */

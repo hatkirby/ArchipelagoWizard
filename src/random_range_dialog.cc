@@ -433,12 +433,12 @@ OptionValue RandomRangeDialog::GetOptionValue() const {
     result.random = true;
 
     for (const auto& [rrd_value, weight] : weights_) {
-      if (weight == 0) {
+      if (weight.weight == 0) {
         continue;
       }
 
       OptionValue sub_option = rrd_value.ToOptionValue();
-      sub_option.weight = weight;
+      sub_option.weight = weight.weight;
 
       result.weighting.push_back(sub_option);
     }
@@ -450,42 +450,51 @@ OptionValue RandomRangeDialog::GetOptionValue() const {
 void RandomRangeDialog::AddWeightRow(const RrdValue& value, wxWindow* parent,
                                      wxSizer* sizer, int default_value,
                                      int deleteable) {
-  wxSlider* row_slider = new wxSlider(parent, wxID_ANY, default_value, 0, 50);
-  wxStaticText* row_label =
+  WeightRow wr;
+  wr.weight = default_value;
+  wr.row_slider = new wxSlider(parent, wxID_ANY, default_value, 0, 50);
+  wr.row_label =
       new wxStaticText(parent, wxID_ANY, std::to_string(default_value));
 
-  row_slider->Bind(
-      wxEVT_SLIDER, [this, value, row_slider, row_label](wxCommandEvent&) {
-        weights_[value] = row_slider->GetValue();
-        row_label->SetLabel(std::to_string(row_slider->GetValue()));
-        Layout();
-      });
+  wr.row_slider->Bind(wxEVT_SLIDER, [this, value](wxCommandEvent&) {
+    WeightRow& wr = weights_[value];
+    wr.weight = wr.row_slider->GetValue();
+    wr.row_label->SetLabel(std::to_string(wr.row_slider->GetValue()));
+    wr.row_label->GetContainingSizer()->Layout();
+  });
 
-  wxStaticText* header_label =
-      new wxStaticText(parent, wxID_ANY, value.ToString());
-  sizer->Add(header_label);
-  sizer->Add(row_slider, wxSizerFlags().Expand());
-  sizer->Add(row_label, wxSizerFlags().Align(wxALIGN_RIGHT));
+  wr.header_label = new wxStaticText(parent, wxID_ANY, value.ToString());
+  sizer->Add(wr.header_label);
+  sizer->Add(wr.row_slider, wxSizerFlags().Expand());
+  sizer->Add(wr.row_label, wxSizerFlags().Align(wxALIGN_RIGHT));
 
   if (deleteable) {
-    wxButton* delete_button = new wxButton(
-        parent, wxID_ANY, "X", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
-    delete_button->Bind(
-        wxEVT_BUTTON, [this, row_slider, header_label, row_label, delete_button,
-                       value](wxCommandEvent&) {
-          header_label->Destroy();
-          row_label->Destroy();
-          delete_button->Destroy();
-          row_slider->Destroy();
-          Layout();
+    wr.delete_button = new wxButton(parent, wxID_ANY, "X", wxDefaultPosition,
+                                    wxDefaultSize, wxBU_EXACTFIT);
+    wr.delete_button->Bind(wxEVT_BUTTON, &RandomRangeDialog::OnDeleteClicked,
+                           this);
 
-          weights_.erase(value);
-        });
+    sizer->Add(wr.delete_button);
 
-    sizer->Add(delete_button);
+    value_by_delete_button_id_[wr.delete_button->GetId()] = value;
   } else {
     sizer->Add(0, 0);
   }
 
-  weights_[value] = default_value;
+  weights_[value] = std::move(wr);
+}
+
+void RandomRangeDialog::OnDeleteClicked(wxCommandEvent& event) {
+  RrdValue rrd_value = value_by_delete_button_id_[event.GetId()];
+  value_by_delete_button_id_.erase(event.GetId());
+
+  const WeightRow& wr = weights_[rrd_value];
+  wr.header_label->Destroy();
+  wr.row_label->Destroy();
+  wr.delete_button->Destroy();
+  wr.row_slider->Destroy();
+  Layout();
+  Fit();
+
+  weights_.erase(rrd_value);
 }
