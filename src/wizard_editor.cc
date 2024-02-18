@@ -81,7 +81,12 @@ void WizardEditor::Rebuild() {
       wxStaticText* option_label =
           new wxStaticText(other_options_, wxID_ANY, "");
       option_label->SetLabelText(game_option.display_name + ":");
-      option_label->SetToolTip(game_option.description);
+      option_label->Bind(wxEVT_ENTER_WINDOW, [this,
+                                              &game_option](wxMouseEvent&) {
+        if (message_callback_) {
+          message_callback_(game_option.display_name, game_option.description);
+        }
+      });
       options_form_sizer->Add(option_label,
                               wxSizerFlags().Align(wxALIGN_TOP | wxALIGN_LEFT));
 

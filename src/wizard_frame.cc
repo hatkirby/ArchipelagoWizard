@@ -45,18 +45,47 @@ WizardFrame::WizardFrame()
   splitter_window_ = new wxSplitterWindow(this, wxID_ANY);
   splitter_window_->SetMinimumPaneSize(250);
 
-  world_list_ = new wxTreeCtrl(splitter_window_, wxID_ANY, wxDefaultPosition,
+  wxPanel* left_pane = new wxPanel(splitter_window_, wxID_ANY);
+
+  world_list_ = new wxTreeCtrl(left_pane, wxID_ANY, wxDefaultPosition,
                                wxDefaultSize, wxTR_HIDE_ROOT);
   wxTreeItemId root_id = world_list_->AddRoot("Multiworld");
 
   world_list_->Bind(wxEVT_TREE_SEL_CHANGED, &WizardFrame::OnWorldSelected,
                     this);
 
+  message_pane_ = new wxScrolledWindow(left_pane, wxID_ANY);
+
+  message_header_ = new wxStaticText(message_pane_, wxID_ANY, "");
+  message_header_->SetFont(message_header_->GetFont().Bold());
+
+  message_window_ = new wxStaticText(message_pane_, wxID_ANY, "");
+
+  wxBoxSizer* msg_sizer = new wxBoxSizer(wxVERTICAL);
+  msg_sizer->Add(message_header_, wxSizerFlags().Expand());
+  msg_sizer->AddSpacer(10);
+  msg_sizer->Add(message_window_, wxSizerFlags().Expand());
+  message_pane_->SetSizer(msg_sizer);
+  message_pane_->Layout();
+
+  wxBoxSizer* left_sizer = new wxBoxSizer(wxVERTICAL);
+  left_sizer->Add(world_list_, wxSizerFlags().Proportion(4).Expand());
+  left_sizer->Add(message_pane_,
+                  wxSizerFlags().DoubleBorder().Proportion(1).Expand());
+  left_pane->SetSizer(left_sizer);
+  left_pane->Layout();
+
+  message_pane_->SetScrollRate(0, 5);
+
   world_window_ = new WorldWindow(splitter_window_, game_definitions_.get());
 
-  splitter_window_->SplitVertically(world_list_, world_window_, 250);
+  splitter_window_->SplitVertically(left_pane, world_window_, 250);
 
   world_window_->Hide();
+  world_window_->SetMessageCallback(
+      [this](const wxString& header, const wxString& msg) {
+        ShowMessage(header, msg);
+      });
 
   wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
   sizer->Add(splitter_window_, wxSizerFlags().Proportion(1).Expand());
@@ -163,4 +192,18 @@ void WizardFrame::UpdateWorldDisplay(World* world, wxTreeItemId tree_item_id) {
   }
 
   world_list_->SetItemText(tree_item_id, world_display.str());
+}
+
+void WizardFrame::ShowMessage(const wxString& header, const wxString& msg) {
+  int width = message_pane_->GetClientSize().GetWidth();
+  message_header_->SetLabel(header);
+  message_header_->Wrap(width);
+
+  message_window_->SetLabel(msg);
+  message_window_->Wrap(width);
+
+  message_pane_->SetSizer(message_pane_->GetSizer());
+  message_pane_->Layout();
+  message_pane_->FitInside();
+  message_pane_->Scroll(0, 0);
 }

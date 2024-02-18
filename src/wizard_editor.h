@@ -10,6 +10,7 @@
 #include <wx/checklst.h>
 #include <wx/scrolwin.h>
 
+#include <functional>
 #include <list>
 #include <map>
 
@@ -60,6 +61,11 @@ class WizardEditor : public wxScrolledWindow {
 
   void Reload();
 
+  void SetMessageCallback(
+      std::function<void(const wxString&, const wxString&)> callback) {
+    message_callback_ = std::move(callback);
+  }
+
  private:
   friend class FormOption;
 
@@ -80,6 +86,8 @@ class WizardEditor : public wxScrolledWindow {
   wxBoxSizer* top_sizer_;
 
   std::list<FormOption> form_options_;
+
+  std::function<void(const wxString&, const wxString&)> message_callback_;
 };
 
 #endif /* end of include guard: WIZARD_EDITOR_H_AB195E2D */

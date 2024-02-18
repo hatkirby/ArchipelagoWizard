@@ -30,10 +30,15 @@ class WizardFrame : public wxFrame {
   void InitializeWorld(std::unique_ptr<World> world);
   void SyncWorldIndices();
   void UpdateWorldDisplay(World* world, wxTreeItemId tree_item_id);
+  void ShowMessage(const wxString& header, const wxString& msg);
 
   wxSplitterWindow* splitter_window_;
   wxTreeCtrl* world_list_;
   WorldWindow* world_window_;
+
+  wxScrolledWindow* message_pane_;
+  wxStaticText* message_header_;
+  wxStaticText* message_window_;
 
   std::unique_ptr<GameDefinitions> game_definitions_;
 

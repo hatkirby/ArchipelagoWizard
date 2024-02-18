@@ -36,3 +36,8 @@ void WorldWindow::OnPageChanged(wxBookCtrlEvent& event) {
     yaml_editor_->LoadWorld(world_);
   }
 }
+
+void WorldWindow::SetMessageCallback(
+    std::function<void(const wxString&, const wxString&)> callback) {
+  wizard_editor_->SetMessageCallback(std::move(callback));
+}

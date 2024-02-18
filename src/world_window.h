@@ -9,6 +9,8 @@
 
 #include <wx/notebook.h>
 
+#include <functional>
+
 class GameDefinitions;
 class WizardEditor;
 class World;
@@ -19,6 +21,9 @@ class WorldWindow : public wxNotebook {
   WorldWindow(wxWindow* parent, const GameDefinitions* game_definitions);
 
   void LoadWorld(World* world);
+
+  void SetMessageCallback(
+      std::function<void(const wxString&, const wxString&)> callback);
 
  private:
   void OnPageChanged(wxBookCtrlEvent& event);
