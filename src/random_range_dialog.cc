@@ -96,9 +96,28 @@ bool RrdValue::operator<(const RrdValue& rhs) const {
 RandomRangeDialog::RandomRangeDialog(const OptionDefinition* option_definition,
                                      const OptionValue& option_value)
     : wxDialog(nullptr, wxID_ANY, "Randomization Settings") {
-  // Mode picker.
+  // Initialise the form.
   wxBoxSizer* top_sizer = new wxBoxSizer(wxVERTICAL);
 
+  wxPanel* desc_panel = new wxPanel(this, wxID_ANY);
+  wxStaticBoxSizer* desc_sizer =
+      new wxStaticBoxSizer(wxVERTICAL, desc_panel, "Option Description");
+
+  wxStaticText* option_header =
+      new wxStaticText(desc_sizer->GetStaticBox(), wxID_ANY, "");
+  option_header->SetFont(option_header->GetFont().Bold());
+
+  wxStaticText* option_description =
+      new wxStaticText(desc_sizer->GetStaticBox(), wxID_ANY, "");
+
+  desc_sizer->Add(option_header, wxSizerFlags().Expand());
+  desc_sizer->AddSpacer(10);
+  desc_sizer->Add(option_description, wxSizerFlags().Expand());
+  desc_panel->SetSizer(desc_sizer);
+
+  top_sizer->Add(desc_panel, wxSizerFlags().DoubleBorder().Expand());
+
+  // Mode picker.
   const wxString mode_choices[] = {"Off", "On", "Weighted"};
   modes_box_ =
       new wxRadioBox(this, wxID_ANY, "Randomization Mode", wxDefaultPosition,
@@ -395,6 +414,15 @@ RandomRangeDialog::RandomRangeDialog(const OptionDefinition* option_definition,
   SetSizer(top_sizer);
   Layout();
   SetMinSize(GetSize());
+  Fit();
+
+  int width = option_header->GetClientSize().GetWidth();
+  option_header->SetLabel(option_definition->display_name);
+  option_header->Wrap(width);
+
+  option_description->SetLabel(option_definition->description);
+  option_description->Wrap(width);
+
   Fit();
   CentreOnParent();
 }
