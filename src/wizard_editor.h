@@ -8,6 +8,7 @@
 #endif
 
 #include <wx/checklst.h>
+#include <wx/collpane.h>
 #include <wx/scrolwin.h>
 
 #include <functional>
@@ -27,8 +28,8 @@ class World;
 
 class FormOption {
  public:
-  FormOption(WizardEditor* parent, const std::string& option_name,
-             wxSizer* sizer);
+  FormOption(WizardEditor* parent, wxWindow* container,
+             const std::string& option_name, wxSizer* sizer);
 
   void PopulateFromWorld();
 
@@ -73,6 +74,8 @@ class WizardEditor : public wxScrolledWindow {
 
   void Rebuild();
 
+  void FixSize();
+
   void OnChangeName(wxCommandEvent& event);
   void OnChangeGame(wxCommandEvent& event);
 
@@ -83,6 +86,7 @@ class WizardEditor : public wxScrolledWindow {
   wxTextCtrl* name_box_;
   wxChoice* game_box_;
   wxPanel* other_options_ = nullptr;
+  wxCollapsiblePane* common_options_pane_ = nullptr;
   wxBoxSizer* top_sizer_;
 
   std::list<FormOption> form_options_;

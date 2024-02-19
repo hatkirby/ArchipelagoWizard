@@ -119,6 +119,69 @@ GameDefinitions::GameDefinitions() {
       options.push_back(std::move(option));
     }
 
+    for (const auto& common_option : game_data["commonOptions"]) {
+      OptionDefinition option;
+      option.name = common_option;
+      option.common = true;
+
+      if (option.name == "local_items") {
+        option.type = kSetOption;
+        option.set_type = kItemSet;
+        option.display_name = "Local Items";
+        option.description = "Forces these items to be in their native world.";
+      } else if (option.name == "non_local_items") {
+        option.type = kSetOption;
+        option.set_type = kItemSet;
+        option.display_name = "Not Local Items";
+        option.description =
+            "Forces these items to be outside their native world.";
+      } else if (option.name == "start_inventory") {
+        option.type = kUNKNOWN_OPTION_TYPE;
+        option.display_name = "Start Inventory";
+        option.description = "Start with these items.";
+      } else if (option.name == "start_inventory_from_pool") {
+        option.type = kUNKNOWN_OPTION_TYPE;
+        option.display_name = "Start Inventory from Pool";
+        option.description =
+            "Start with these items and don't place them in the world.\nThe "
+            "game decides what the replacement items will be.";
+      } else if (option.name == "start_hints") {
+        option.type = kSetOption;
+        option.set_type = kItemSet;
+        option.display_name = "Start Hints";
+        option.description =
+            "Start with these item's locations prefilled into the !hint "
+            "command.";
+      } else if (option.name == "start_location_hints") {
+        option.type = kSetOption;
+        option.set_type = kLocationSet;
+        option.display_name = "Start Location Hints";
+        option.description =
+            "Start with these locations and their item prefilled into the "
+            "!hint command.";
+      } else if (option.name == "exclude_locations") {
+        option.type = kSetOption;
+        option.set_type = kLocationSet;
+        option.display_name = "Excluded Locations";
+        option.description =
+            "Prevent these locations from having an important item.";
+      } else if (option.name == "priority_locations") {
+        option.type = kSetOption;
+        option.set_type = kLocationSet;
+        option.display_name = "Priority Locations";
+        option.description =
+            "Prevent these locations from having an unimportant item.";
+      } else if (option.name == "item_links") {
+        option.type = kUNKNOWN_OPTION_TYPE;
+        option.display_name = "Item Links";
+        option.description = "Share part of your item pool with other players.";
+      } else {
+        continue;
+      }
+
+      options.push_back(std::move(option));
+    }
+
     std::cout << "Read " << options.size() << " options for " << game_name
               << std::endl;
     games_.emplace(std::piecewise_construct, std::forward_as_tuple(game_name),

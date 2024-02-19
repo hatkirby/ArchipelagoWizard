@@ -50,7 +50,7 @@ struct OptionValue {
 
 struct OptionDefinition {
   OptionType type = kUNKNOWN_OPTION_TYPE;
-  bool named_range = false;
+  bool common = false;
 
   std::string name;
   std::string display_name;
@@ -58,6 +58,7 @@ struct OptionDefinition {
 
   int min_value = 0;
   int max_value = 0;
+  bool named_range = false;
   OrderedBijection<int, std::string> value_names;  // value, display name
 
   SetType set_type = kUNKNOWN_SET_TYPE;

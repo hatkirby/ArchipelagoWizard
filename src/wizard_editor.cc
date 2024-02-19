@@ -66,6 +66,10 @@ void WizardEditor::Rebuild() {
   if (other_options_ != nullptr) {
     other_options_->Destroy();
     other_options_ = nullptr;
+    if (common_options_pane_ != nullptr) {
+      common_options_pane_->Destroy();
+      common_options_pane_ = nullptr;
+    }
     form_options_.clear();
   }
 
@@ -77,36 +81,45 @@ void WizardEditor::Rebuild() {
     wxFlexGridSizer* options_form_sizer = new wxFlexGridSizer(3, 10, 10);
     options_form_sizer->AddGrowableCol(1);
 
+    std::vector<const OptionDefinition*> common_options;
     for (const OptionDefinition& game_option : game.GetOptions()) {
-      wxStaticText* option_label =
-          new wxStaticText(other_options_, wxID_ANY, "");
-      option_label->SetLabelText(game_option.display_name + ":");
-      option_label->Bind(wxEVT_ENTER_WINDOW, [this,
-                                              &game_option](wxMouseEvent&) {
-        if (message_callback_) {
-          message_callback_(game_option.display_name, game_option.description);
-        }
-      });
-      options_form_sizer->Add(option_label,
-                              wxSizerFlags().Align(wxALIGN_TOP | wxALIGN_LEFT));
-
-      form_options_.emplace_back(this, game_option.name, options_form_sizer);
+      if (game_option.common) {
+        common_options.push_back(&game_option);
+        continue;
+      }
+      form_options_.emplace_back(this, other_options_, game_option.name,
+                                 options_form_sizer);
     }
 
     other_options_->SetSizerAndFit(options_form_sizer);
     top_sizer_->Add(other_options_, wxSizerFlags().DoubleBorder().Expand());
 
+    if (!common_options.empty()) {
+      common_options_pane_ = new wxCollapsiblePane(
+          this, wxID_ANY, "Advanced Options", wxDefaultPosition, wxDefaultSize,
+          wxCP_DEFAULT_STYLE | wxCP_NO_TLW_RESIZE);
+
+      common_options_pane_->Bind(
+          wxEVT_COLLAPSIBLEPANE_CHANGED,
+          [this](wxCollapsiblePaneEvent&) { FixSize(); });
+
+      wxFlexGridSizer* common_options_sizer = new wxFlexGridSizer(3, 10, 10);
+      common_options_sizer->AddGrowableCol(1);
+
+      for (const OptionDefinition* game_option : common_options) {
+        form_options_.emplace_back(this, common_options_pane_->GetPane(),
+                                   game_option->name, common_options_sizer);
+      }
+
+      common_options_pane_->GetPane()->SetSizerAndFit(common_options_sizer);
+      top_sizer_->Add(common_options_pane_,
+                      wxSizerFlags().DoubleBorder().Proportion(0).Expand());
+    }
+
     Populate();
   }
 
-  SetSizer(top_sizer_);
-  Layout();
-  FitInside();
-
-  wxWindow* frame = wxGetTopLevelParent(this);
-  frame->SetMinSize(frame->GetSize());
-  frame->Fit();
-  frame->SetMinSize(wxSize(728, 728 / 2));
+  FixSize();
 }
 
 void WizardEditor::Populate() {
@@ -115,6 +128,17 @@ void WizardEditor::Populate() {
   for (FormOption& form_option : form_options_) {
     form_option.PopulateFromWorld();
   }
+}
+
+void WizardEditor::FixSize() {
+  SetSizer(top_sizer_);
+  Layout();
+  FitInside();
+
+  wxWindow* frame = wxGetTopLevelParent(this);
+  frame->SetMinSize(frame->GetSize());
+  frame->Fit();
+  frame->SetMinSize(wxSize(728, 728 / 2));
 }
 
 void WizardEditor::OnChangeName(wxCommandEvent& event) {
@@ -141,17 +165,27 @@ void WizardEditor::OnChangeGame(wxCommandEvent& event) {
   Rebuild();
 }
 
-FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
-                       wxSizer* sizer)
+FormOption::FormOption(WizardEditor* parent, wxWindow* container,
+                       const std::string& option_name, wxSizer* sizer)
     : parent_(parent), option_name_(option_name) {
   const Game& game =
       parent_->game_definitions_->GetGame(parent_->world_->GetGame());
   const OptionDefinition& game_option = game.GetOption(option_name_);
 
+  wxStaticText* option_label = new wxStaticText(container, wxID_ANY, "");
+  option_label->SetLabelText(game_option.display_name + ":");
+  option_label->Bind(wxEVT_ENTER_WINDOW, [parent, &game_option](wxMouseEvent&) {
+    if (parent->message_callback_) {
+      parent->message_callback_(game_option.display_name,
+                                game_option.description);
+    }
+  });
+  sizer->Add(option_label, wxSizerFlags().Align(wxALIGN_TOP | wxALIGN_LEFT));
+
   bool randomizable = false;
 
   if (game_option.type == kSelectOption) {
-    combo_box_ = new wxChoice(parent_->other_options_, wxID_ANY);
+    combo_box_ = new wxChoice(container, wxID_ANY);
 
     for (const auto& [value_id, value_display] :
          game_option.choices.GetItems()) {
@@ -163,12 +197,12 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
 
     randomizable = true;
   } else if (game_option.type == kRangeOption) {
-    slider_ = new wxSlider(parent_->other_options_, wxID_ANY,
-                           game_option.default_value.int_value,
-                           game_option.min_value, game_option.max_value);
+    slider_ =
+        new wxSlider(container, wxID_ANY, game_option.default_value.int_value,
+                     game_option.min_value, game_option.max_value);
     slider_->Bind(wxEVT_SLIDER, &FormOption::OnRangeSliderChanged, this);
 
-    label_ = new wxStaticText(parent_->other_options_, wxID_ANY, "");
+    label_ = new wxStaticText(container, wxID_ANY, "");
 
     wxFlexGridSizer* range_sizer = new wxFlexGridSizer(2, 10, 10);
     range_sizer->AddGrowableCol(0);
@@ -179,7 +213,7 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
     wxSizer* final_sizer = range_sizer;
 
     if (game_option.named_range) {
-      combo_box_ = new wxChoice(parent_->other_options_, wxID_ANY);
+      combo_box_ = new wxChoice(container, wxID_ANY);
 
       for (const auto& [value_value, value_name] :
            game_option.value_names.GetItems()) {
@@ -201,7 +235,7 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
 
     randomizable = true;
   } else if (game_option.type == kSetOption) {
-    list_box_ = new wxCheckListBox(parent_->other_options_, wxID_ANY);
+    list_box_ = new wxCheckListBox(container, wxID_ANY);
 
     if (game_option.set_type == kCustomSet) {
       for (const auto& [value_id, value_display] :
@@ -222,14 +256,14 @@ FormOption::FormOption(WizardEditor* parent, const std::string& option_name,
 
     sizer->Add(list_box_, wxSizerFlags().Expand());
   } else {
-    sizer->Add(0, 0);
+    sizer->Add(new wxStaticText(container, wxID_ANY, "YAML-only option."));
   }
 
   if (randomizable) {
     std::string dice = "\xf0\x9f\x8e\xb2";
-    random_button_ = new wxToggleButton(
-        parent_->other_options_, wxID_ANY, wxString::FromUTF8(dice),
-        wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+    random_button_ =
+        new wxToggleButton(container, wxID_ANY, wxString::FromUTF8(dice),
+                           wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
     random_button_->Bind(wxEVT_TOGGLEBUTTON, &FormOption::OnRandomClicked,
                          this);
     sizer->Add(random_button_);
