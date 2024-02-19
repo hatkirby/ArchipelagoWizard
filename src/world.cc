@@ -31,6 +31,8 @@ OptionValue OptionValueForRangeValue(const OptionDefinition& option,
   std::string str_val = node.as<std::string>();
   if (str_val.starts_with("random")) {
     option_value = GetRandomOptionValueFromString(str_val);
+  } else if (option.value_names.HasValue(str_val)) {
+    option_value.int_value = option.value_names.GetByValue(str_val);
   } else {
     try {
       option_value.int_value = node.as<int>();
