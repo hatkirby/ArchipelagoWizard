@@ -241,7 +241,15 @@ void World::PopulateFromYaml() {
                   break;
                 }
 
-                option_value.weighting.push_back(std::move(sub_option_value));
+                if (sub_option_value.weight > 0) {
+                  option_value.weighting.push_back(std::move(sub_option_value));
+                }
+              }
+
+              if (option_value.weighting.size() == 1) {
+                OptionValue sub_option_value = option_value.weighting.front();
+                sub_option_value.error = option_value.error;
+                option_value = sub_option_value;
               }
             }
           } else if (option.type == kSetOption) {
