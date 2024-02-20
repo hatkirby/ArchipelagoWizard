@@ -2,6 +2,7 @@
 #define DOUBLE_MAP_H_545C60BC
 
 #include <map>
+#include <vector>
 
 template <typename T>
 class DoubleMap {
