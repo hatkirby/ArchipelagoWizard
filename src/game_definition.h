@@ -62,6 +62,8 @@ struct OptionDefinition {
   OrderedBijection<int, std::string> value_names;  // value, display name
 
   SetType set_type = kUNKNOWN_SET_TYPE;
+  DoubleMap<std::string> custom_set;
+
   OrderedBijection<std::string, std::string> choices;  // id, display name
 
   OptionValue default_value;

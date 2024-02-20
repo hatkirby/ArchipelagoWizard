@@ -3,8 +3,10 @@
 #include <wx/statline.h>
 #include <wx/tglbtn.h>
 
+#include "option_set_dialog.h"
 #include "random_choice_dialog.h"
 #include "random_range_dialog.h"
+#include "util.h"
 #include "world.h"
 
 enum WizardEditorIds { ID_CONNECT = 1, ID_CHECK_FOR_UPDATES = 2 };
@@ -235,26 +237,26 @@ FormOption::FormOption(WizardEditor* parent, wxWindow* container,
 
     randomizable = true;
   } else if (game_option.type == kSetOption) {
-    list_box_ = new wxCheckListBox(container, wxID_ANY);
+    if (game_option.set_type == kCustomSet &&
+        game_option.custom_set.size() <= 15) {
+      list_box_ = new wxCheckListBox(container, wxID_ANY);
 
-    if (game_option.set_type == kCustomSet) {
-      for (const auto& [value_id, value_display] :
-           game_option.choices.GetItems()) {
-        list_box_->Append(value_display);
-      }
-    } else if (game_option.set_type == kItemSet) {
-      for (const std::string& name : game.GetItems().GetList()) {
+      const DoubleMap<std::string>& option_set =
+          GetOptionSetElements(game, option_name_);
+      for (const std::string& name : option_set.GetList()) {
         list_box_->Append(name);
       }
-    } else if (game_option.set_type == kLocationSet) {
-      for (const std::string& name : game.GetLocations().GetList()) {
-        list_box_->Append(name);
-      }
+
+      list_box_->Bind(wxEVT_CHECKLISTBOX, &FormOption::OnListItemChecked, this);
+
+      sizer->Add(list_box_, wxSizerFlags().Expand());
+    } else {
+      open_choice_btn_ = new wxButton(container, wxID_ANY, "Edit option");
+      open_choice_btn_->Bind(wxEVT_BUTTON, &FormOption::OnOptionSetClicked,
+                             this);
+
+      sizer->Add(open_choice_btn_, wxSizerFlags().Expand());
     }
-
-    list_box_->Bind(wxEVT_CHECKLISTBOX, &FormOption::OnListItemChecked, this);
-
-    sizer->Add(list_box_, wxSizerFlags().Expand());
   } else {
     sizer->Add(new wxStaticText(container, wxID_ANY, "YAML-only option."));
   }
@@ -333,13 +335,21 @@ void FormOption::PopulateFromWorld() {
       }
     }
   } else if (game_option.type == kSetOption) {
-    if (ov.error) {
-      list_box_->Disable();
-    } else {
-      list_box_->Enable();
+    if (list_box_ != nullptr) {
+      if (ov.error) {
+        list_box_->Disable();
+      } else {
+        list_box_->Enable();
 
-      for (int i = 0; i < ov.set_values.size(); i++) {
-        list_box_->Check(i, ov.set_values.at(i));
+        for (int i = 0; i < ov.set_values.size(); i++) {
+          list_box_->Check(i, ov.set_values.at(i));
+        }
+      }
+    } else if (open_choice_btn_ != nullptr) {
+      if (ov.error) {
+        open_choice_btn_->Disable();
+      } else {
+        open_choice_btn_->Enable();
       }
     }
   }
@@ -475,6 +485,23 @@ void FormOption::OnRandomClicked(wxCommandEvent& event) {
   }
 
   PopulateFromWorld();
+}
+
+void FormOption::OnOptionSetClicked(wxCommandEvent& event) {
+  const Game& game =
+      parent_->game_definitions_->GetGame(parent_->world_->GetGame());
+  const OptionDefinition& game_option = game.GetOption(option_name_);
+
+  const OptionValue& ov = parent_->world_->HasOption(option_name_)
+                              ? parent_->world_->GetOption(option_name_)
+                              : game_option.default_value;
+
+  OptionSetDialog osd(&game, option_name_, ov);
+  if (osd.ShowModal() != wxID_OK) {
+    return;
+  }
+
+  parent_->world_->SetOption(option_name_, osd.GetOptionValue());
 }
 
 void FormOption::SaveToWorld() {

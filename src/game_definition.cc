@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <set>
 
 #include "util.h"
 
@@ -13,20 +14,30 @@ GameDefinitions::GameDefinitions() {
   for (const auto& [game_name, game_data] : all_games.items()) {
     std::vector<OptionDefinition> options;
 
-    DoubleMap<std::string> game_items;
+    std::set<std::string> sorted_game_items;
     for (const auto& item_name : game_data["itemGroups"]) {
-      game_items.Append(item_name);
+      sorted_game_items.insert(item_name);
     }
     for (const auto& item_name : game_data["items"]) {
-      game_items.Append(item_name);
+      sorted_game_items.insert(item_name);
+    }
+
+    DoubleMap<std::string> game_items;
+    for (const std::string& game_item : sorted_game_items) {
+      game_items.Append(game_item);
+    }
+
+    std::set<std::string> sorted_game_locations;
+    for (const auto& location_name : game_data["locationGroups"]) {
+      sorted_game_locations.insert(location_name);
+    }
+    for (const auto& location_name : game_data["locations"]) {
+      sorted_game_locations.insert(location_name);
     }
 
     DoubleMap<std::string> game_locations;
-    for (const auto& location_name : game_data["locationGroups"]) {
-      game_locations.Append(location_name);
-    }
-    for (const auto& location_name : game_data["locations"]) {
-      game_locations.Append(location_name);
+    for (const std::string& game_location : sorted_game_locations) {
+      game_locations.Append(game_location);
     }
 
     for (const auto& [option_name, option_data] :
@@ -61,13 +72,13 @@ GameDefinitions::GameDefinitions() {
         option.set_type = kCustomSet;
 
         for (const auto& choice : option_data["options"]) {
-          option.choices.Append(choice, choice);
+          option.custom_set.Append(choice);
           option.default_value.set_values.push_back(false);
         }
 
         for (const auto& default_value : option_data["defaultValue"]) {
           option.default_value
-              .set_values[option.choices.GetKeyId(default_value)] = true;
+              .set_values[option.custom_set.GetId(default_value)] = true;
         }
       } else if (option_data["type"] == "items-set") {
         option.type = kSetOption;

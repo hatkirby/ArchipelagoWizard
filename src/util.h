@@ -4,6 +4,7 @@
 #include <iterator>
 #include <string>
 
+#include "double_map.h"
 #include "game_definition.h"
 
 template <class OutputIterator>
@@ -36,5 +37,8 @@ Container split(std::string input, std::string delimiter) {
 OptionValue GetRandomOptionValueFromString(std::string descriptor);
 
 std::string RandomOptionValueToString(const OptionValue& option_value);
+
+const DoubleMap<std::string>& GetOptionSetElements(
+    const Game& game, const std::string& option_name);
 
 #endif /* end of include guard: UTIL_H_84145E76 */

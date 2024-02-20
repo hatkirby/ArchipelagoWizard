@@ -91,3 +91,18 @@ std::string RandomOptionValueToString(const OptionValue& option_value) {
 
   return random_str.str();
 }
+
+const DoubleMap<std::string>& GetOptionSetElements(
+    const Game& game, const std::string& option_name) {
+  const OptionDefinition& game_option = game.GetOption(option_name);
+
+  if (game_option.set_type == kCustomSet) {
+    return game_option.custom_set;
+  } else if (game_option.set_type == kItemSet) {
+    return game.GetItems();
+  } else if (game_option.set_type == kLocationSet) {
+    return game.GetLocations();
+  }
+
+  throw std::invalid_argument("Invalid option set type.");
+}

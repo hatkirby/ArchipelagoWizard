@@ -159,18 +159,14 @@ void World::SetOption(const std::string& option_name,
   } else if (option.type == kSetOption) {
     yaml_[*game_].remove(option_name);
 
+    const DoubleMap<std::string>& option_set =
+        GetOptionSetElements(game, option_name);
     bool any_set = false;
     for (int i = 0; i < option_value.set_values.size(); i++) {
       if (option_value.set_values.at(i)) {
         any_set = true;
 
-        if (option.set_type == kCustomSet) {
-          yaml_[*game_][option_name].push_back(option.choices.GetKeyById(i));
-        } else if (option.set_type == kItemSet) {
-          yaml_[*game_][option_name].push_back(game.GetItems().GetValue(i));
-        } else if (option.set_type == kLocationSet) {
-          yaml_[*game_][option_name].push_back(game.GetLocations().GetValue(i));
-        }
+        yaml_[*game_][option_name].push_back(option_set.GetValue(i));
       }
     }
 
@@ -255,29 +251,17 @@ void World::PopulateFromYaml() {
               }
             }
           } else if (option.type == kSetOption) {
-            if (option.set_type == kCustomSet) {
-              option_value.set_values.resize(option.choices.GetItems().size());
-            } else if (option.set_type == kItemSet) {
-              option_value.set_values.resize(game.GetItems().size());
-            } else if (option.set_type == kLocationSet) {
-              option_value.set_values.resize(game.GetLocations().size());
-            }
+            const DoubleMap<std::string>& option_set =
+                GetOptionSetElements(game, option.name);
+            option_value.set_values.resize(option_set.size());
 
             if (game_node[option.name].IsSequence()) {
               for (const YAML::Node& set_value : game_node[option.name]) {
                 std::string str_val = set_value.as<std::string>();
-
-                if (option.set_type == kCustomSet) {
-                  option_value.set_values[option.choices.GetKeyId(str_val)] =
-                      true;
-                } else if (option.set_type == kItemSet) {
-                  option_value.set_values[game.GetItems().GetId(str_val)] =
-                      true;
-                } else if (option.set_type == kLocationSet) {
-                  option_value.set_values[game.GetLocations().GetId(str_val)] =
-                      true;
-                }
+                option_value.set_values[option_set.GetId(str_val)] = true;
               }
+            } else {
+              option_value.error = "Option value should be a list.";
             }
           }
 

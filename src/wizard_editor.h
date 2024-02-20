@@ -41,6 +41,7 @@ class FormOption {
   void OnSelectChanged(wxCommandEvent& event);
   void OnListItemChecked(wxCommandEvent& event);
   void OnRandomClicked(wxCommandEvent& event);
+  void OnOptionSetClicked(wxCommandEvent& event);
 
   void SaveToWorld();
 
@@ -52,6 +53,7 @@ class FormOption {
   wxStaticText* label_ = nullptr;
   wxCheckListBox* list_box_ = nullptr;
   wxToggleButton* random_button_ = nullptr;
+  wxButton* open_choice_btn_ = nullptr;
 };
 
 class WizardEditor : public wxScrolledWindow {
