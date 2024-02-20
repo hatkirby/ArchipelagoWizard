@@ -188,7 +188,7 @@ void WizardFrame::UpdateWorldDisplay(World* world, wxTreeItemId tree_item_id) {
   }
 
   if (world->HasGame()) {
-    world_display << "[" << world->GetGame() << "]";
+    world_display << " [" << world->GetGame() << "]";
   }
 
   world_list_->SetItemText(tree_item_id, world_display.str());
