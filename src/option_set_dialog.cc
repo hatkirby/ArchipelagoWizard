@@ -66,19 +66,53 @@ OptionSetDialog::OptionSetDialog(const Game* game,
 
   // Set up the chosen list
   chosen_list_ = new wxDataViewListCtrl(lists_sizer->GetStaticBox(), wxID_ANY);
-  chosen_list_->AppendTextColumn("Value");
+
+  if (option_definition_->type == kDictOption) {
+    chosen_list_->AppendTextColumn("Value", wxDATAVIEW_CELL_INERT,
+                                   wxCOL_WIDTH_AUTOSIZE);
+
+#ifdef __WXMAC__
+    chosen_list_->AppendTextColumn("Amount", wxDATAVIEW_CELL_INERT,
+                                   wxCOL_WIDTH_AUTOSIZE);
+#else
+    wxDataViewSpinRenderer* amount_renderer =
+        new wxDataViewSpinRenderer(1, 1000);
+    chosen_list_->AppendColumn(new wxDataViewColumn("Amount", amount_renderer,
+                                                    1, wxCOL_WIDTH_AUTOSIZE),
+                               "long");
+#endif
+  } else {
+    chosen_list_->AppendTextColumn("Value");
+  }
 
   const DoubleMap<std::string>& option_set =
       GetOptionSetElements(*game_, option_name);
-  for (int i = 0; i < option_value.set_values.size(); i++) {
-    if (option_value.set_values.at(i)) {
-      std::string str_val = option_set.GetValue(i);
+  if (option_definition_->type == kDictOption) {
+    for (const auto& [id, amount] : option_value.dict_values) {
+      std::string str_val = option_set.GetValue(id);
 
       wxVector<wxVariant> data;
       data.push_back(wxVariant(str_val));
+#ifdef __WXMAC__
+      data.push_back(wxVariant(std::to_string(amount)));
+#else
+      data.push_back(wxVariant(amount));
+#endif
       chosen_list_->AppendItem(data);
 
       picked_.insert(str_val);
+    }
+  } else if (option_definition_->type == kSetOption) {
+    for (int i = 0; i < option_value.set_values.size(); i++) {
+      if (option_value.set_values.at(i)) {
+        std::string str_val = option_set.GetValue(i);
+
+        wxVector<wxVariant> data;
+        data.push_back(wxVariant(str_val));
+        chosen_list_->AppendItem(data);
+
+        picked_.insert(str_val);
+      }
     }
   }
 
@@ -122,10 +156,32 @@ OptionValue OptionSetDialog::GetOptionValue() const {
       GetOptionSetElements(*game_, option_definition_->name);
 
   OptionValue option_value;
-  option_value.set_values.resize(option_set.size());
 
-  for (const std::string& name : picked_) {
-    option_value.set_values[option_set.GetId(name)] = true;
+  if (option_definition_->type == kDictOption) {
+    for (int i = 0; i < chosen_list_->GetItemCount(); i++) {
+      wxString str_sel = chosen_list_->GetTextValue(i, 0);
+
+#ifdef __WXMAC__
+      wxString str_amount = chosen_list_->GetTextValue(i, 1);
+
+      long amount_value;
+      if (str_amount.ToLong(&amount_value)) {
+#else
+      wxVariant amount_variant;
+      chosen_list_->GetValue(amount_variant, i, 1);
+      long amount_value = amount_variant.GetLong();
+      {
+#endif
+        option_value.dict_values[option_set.GetId(str_sel.ToStdString())] =
+            amount_value;
+      }
+    }
+  } else if (option_definition_->type == kSetOption) {
+    option_value.set_values.resize(option_set.size());
+
+    for (const std::string& name : picked_) {
+      option_value.set_values[option_set.GetId(name)] = true;
+    }
   }
 
   return option_value;
@@ -169,6 +225,13 @@ void OptionSetDialog::OnAddClicked(wxCommandEvent& event) {
 
   wxVector<wxVariant> data;
   data.push_back(wxVariant(selected_text));
+  if (option_definition_->type == kDictOption) {
+#ifdef __WXMAC__
+    data.push_back(wxVariant("1"));
+#else
+    data.push_back(wxVariant(1));
+#endif
+  }
   chosen_list_->AppendItem(data);
 
   picked_.insert(selected_text.ToStdString());

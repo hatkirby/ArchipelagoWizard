@@ -236,8 +236,9 @@ FormOption::FormOption(WizardEditor* parent, wxWindow* container,
     sizer->Add(final_sizer, wxSizerFlags().Expand());
 
     randomizable = true;
-  } else if (game_option.type == kSetOption) {
-    if (game_option.set_type == kCustomSet &&
+  } else if (game_option.type == kSetOption ||
+             game_option.type == kDictOption) {
+    if (game_option.type == kSetOption && game_option.set_type == kCustomSet &&
         game_option.custom_set.size() <= 15) {
       list_box_ = new wxCheckListBox(container, wxID_ANY);
 
@@ -334,7 +335,8 @@ void FormOption::PopulateFromWorld() {
         combo_box_->Enable();
       }
     }
-  } else if (game_option.type == kSetOption) {
+  } else if (game_option.type == kSetOption ||
+             game_option.type == kDictOption) {
     if (list_box_ != nullptr) {
       if (ov.error) {
         list_box_->Disable();
@@ -516,8 +518,10 @@ void FormOption::SaveToWorld() {
   } else if (game_option.type == kRangeOption) {
     new_value.int_value = slider_->GetValue();
   } else if (game_option.type == kSetOption) {
-    for (int i = 0; i < list_box_->GetCount(); i++) {
-      new_value.set_values.push_back(list_box_->IsChecked(i));
+    if (list_box_ != nullptr) {
+      for (int i = 0; i < list_box_->GetCount(); i++) {
+        new_value.set_values.push_back(list_box_->IsChecked(i));
+      }
     }
   }
 

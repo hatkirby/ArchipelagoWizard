@@ -89,6 +89,13 @@ GameDefinitions::GameDefinitions() {
           option.default_value.set_values[game_items.GetId(default_value)] =
               true;
         }
+      } else if (option_data["type"] == "items-dict") {
+        option.type = kDictOption;
+        option.set_type = kItemSet;
+
+        for (const auto& default_value : option_data["defaultValue"]) {
+          option.default_value.dict_values[game_items.GetId(default_value)] = 1;
+        }
       } else if (option_data["type"] == "locations-set") {
         option.type = kSetOption;
         option.set_type = kLocationSet;
@@ -147,11 +154,13 @@ GameDefinitions::GameDefinitions() {
         option.description =
             "Forces these items to be outside their native world.";
       } else if (option.name == "start_inventory") {
-        option.type = kUNKNOWN_OPTION_TYPE;
+        option.type = kDictOption;
+        option.set_type = kItemSet;
         option.display_name = "Start Inventory";
         option.description = "Start with these items.";
       } else if (option.name == "start_inventory_from_pool") {
-        option.type = kUNKNOWN_OPTION_TYPE;
+        option.type = kDictOption;
+        option.set_type = kItemSet;
         option.display_name = "Start Inventory from Pool";
         option.description =
             "Start with these items and don't place them in the world.\nThe "

@@ -16,6 +16,7 @@ enum OptionType {
   kRangeOption,
   kSelectOption,
   kSetOption,
+  kDictOption,
 };
 
 enum SetType {
@@ -38,6 +39,7 @@ struct OptionValue {
   std::string string_value;
   int int_value = 0;
   std::vector<bool> set_values;
+  std::map<int, int> dict_values;
 
   int weight = 50;
   std::vector<OptionValue> weighting;

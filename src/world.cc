@@ -171,7 +171,19 @@ void World::SetOption(const std::string& option_name,
     }
 
     if (!any_set) {
+      yaml_[*game_][option_name] = YAML::Load("[]");
+    }
+  } else if (option.type == kDictOption) {
+    yaml_[*game_].remove(option_name);
+
+    const DoubleMap<std::string>& option_set =
+        GetOptionSetElements(game, option_name);
+    if (option_value.dict_values.empty()) {
       yaml_[*game_][option_name] = YAML::Load("{}");
+    } else {
+      for (const auto& [id, amount] : option_value.dict_values) {
+        yaml_[*game_][option_name][option_set.GetValue(id)] = amount;
+      }
     }
   }
 
@@ -262,6 +274,21 @@ void World::PopulateFromYaml() {
               }
             } else {
               option_value.error = "Option value should be a list.";
+            }
+          } else if (option.type == kDictOption) {
+            const DoubleMap<std::string>& option_set =
+                GetOptionSetElements(game, option.name);
+
+            if (game_node[option.name].IsMap()) {
+              for (YAML::const_iterator it = game_node[option.name].begin();
+                   it != game_node[option.name].end(); it++) {
+                std::string str_val = it->first.as<std::string>();
+                int int_val = it->second.as<int>();
+
+                option_value.dict_values[option_set.GetId(str_val)] = int_val;
+              }
+            } else {
+              option_value.error = "Option value should be a map.";
             }
           }
 
