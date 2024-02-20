@@ -1,6 +1,7 @@
 #include "option_set_dialog.h"
 
 #include "double_map.h"
+#include "filterable_item_picker.h"
 #include "util.h"
 
 OptionSetDialog::OptionSetDialog(const Game* game,
@@ -35,29 +36,16 @@ OptionSetDialog::OptionSetDialog(const Game* game,
   wxStaticBoxSizer* lists_sizer =
       new wxStaticBoxSizer(wxHORIZONTAL, lists_panel, "Option Values");
 
-  source_filter_ = new wxTextCtrl(lists_sizer->GetStaticBox(), wxID_ANY);
-  source_filter_->Bind(wxEVT_TEXT, &OptionSetDialog::OnFilterEdited, this);
-
-  source_list_ = new wxListView(lists_sizer->GetStaticBox(), wxID_ANY,
-                                wxDefaultPosition, wxDefaultSize,
-                                wxLC_REPORT | wxLC_NO_HEADER | wxLC_SINGLE_SEL);
-  UpdateSourceList();
-
-  wxBoxSizer* filter_sizer = new wxBoxSizer(wxHORIZONTAL);
-  filter_sizer->Add(
-      new wxStaticText(lists_sizer->GetStaticBox(), wxID_ANY, "Filter:"),
-      wxSizerFlags().Center());
-  filter_sizer->AddSpacer(10);
-  filter_sizer->Add(source_filter_, wxSizerFlags().Proportion(1).Expand());
+  item_picker_ = new FilterableItemPicker(
+      lists_sizer->GetStaticBox(), wxID_ANY,
+      &GetOptionSetElements(*game_, option_definition_->name));
 
   wxButton* add_btn =
       new wxButton(lists_sizer->GetStaticBox(), wxID_ANY, "Add");
   add_btn->Bind(wxEVT_BUTTON, &OptionSetDialog::OnAddClicked, this);
 
   wxBoxSizer* left_sizer = new wxBoxSizer(wxVERTICAL);
-  left_sizer->Add(filter_sizer, wxSizerFlags().Expand());
-  left_sizer->AddSpacer(10);
-  left_sizer->Add(source_list_, wxSizerFlags().Proportion(1).Expand());
+  left_sizer->Add(item_picker_, wxSizerFlags().Proportion(1).Expand());
   left_sizer->AddSpacer(10);
   left_sizer->Add(add_btn, wxSizerFlags().Center());
 
@@ -148,7 +136,7 @@ OptionSetDialog::OptionSetDialog(const Game* game,
   Fit();
   CentreOnParent();
 
-  UpdateSourceList();
+  // UpdateSourceList();
 }
 
 OptionValue OptionSetDialog::GetOptionValue() const {
@@ -187,44 +175,18 @@ OptionValue OptionSetDialog::GetOptionValue() const {
   return option_value;
 }
 
-void OptionSetDialog::UpdateSourceList() {
-  source_list_->ClearAll();
-  source_list_->AppendColumn("Value");
-
-  const DoubleMap<std::string>& option_set =
-      GetOptionSetElements(*game_, option_definition_->name);
-
-  int i = 0;
-  for (const std::string& list_item : option_set.GetList()) {
-    if (!source_filter_->GetValue().IsEmpty()) {
-      wxString wx_list = wxString(list_item).Lower();
-      if (wx_list.Find(source_filter_->GetValue().Lower()) == wxNOT_FOUND) {
-        continue;
-      }
-    }
-
-    source_list_->InsertItem(i, list_item);
-    i++;
-  }
-
-  source_list_->SetColumnWidth(0, wxLIST_AUTOSIZE);
-}
-
-void OptionSetDialog::OnFilterEdited(wxCommandEvent&) { UpdateSourceList(); }
-
 void OptionSetDialog::OnAddClicked(wxCommandEvent& event) {
-  long selection = source_list_->GetFirstSelected();
-  if (selection == -1) {
+  std::optional<std::string> selected_text = item_picker_->GetSelected();
+  if (!selected_text) {
     return;
   }
 
-  wxString selected_text = source_list_->GetItemText(selection, 0);
-  if (picked_.count(selected_text.ToStdString())) {
+  if (picked_.count(*selected_text)) {
     return;
   }
 
   wxVector<wxVariant> data;
-  data.push_back(wxVariant(selected_text));
+  data.push_back(wxVariant(*selected_text));
   if (option_definition_->type == kDictOption) {
 #ifdef __WXMAC__
     data.push_back(wxVariant("1"));
@@ -234,7 +196,7 @@ void OptionSetDialog::OnAddClicked(wxCommandEvent& event) {
   }
   chosen_list_->AppendItem(data);
 
-  picked_.insert(selected_text.ToStdString());
+  picked_.insert(*selected_text);
 }
 
 void OptionSetDialog::OnRemoveClicked(wxCommandEvent& event) {

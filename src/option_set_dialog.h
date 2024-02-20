@@ -15,6 +15,8 @@
 
 #include "game_definition.h"
 
+class FilterableItemPicker;
+
 class OptionSetDialog : public wxDialog {
  public:
   OptionSetDialog(const Game* game, const std::string& option_name,
@@ -23,16 +25,12 @@ class OptionSetDialog : public wxDialog {
   OptionValue GetOptionValue() const;
 
  private:
-  void UpdateSourceList();
-
-  void OnFilterEdited(wxCommandEvent& event);
   void OnAddClicked(wxCommandEvent& event);
   void OnRemoveClicked(wxCommandEvent& event);
 
   const Game* game_;
   const OptionDefinition* option_definition_;
-  wxListView* source_list_;
-  wxTextCtrl* source_filter_;
+  FilterableItemPicker* item_picker_;
   wxDataViewListCtrl* chosen_list_;
 
   std::set<std::string> picked_;
