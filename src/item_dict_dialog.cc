@@ -6,7 +6,8 @@
 
 ItemDictDialog::ItemDictDialog(const Game* game, const std::string& option_name,
                                const OptionValue& option_value)
-    : wxDialog(nullptr, wxID_ANY, "Item Configuration"),
+    : wxDialog(nullptr, wxID_ANY, "Item Configuration", wxDefaultPosition,
+               wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
       game_(game),
       option_definition_(&game->GetOption(option_name)) {
   // Initialize the form.
@@ -32,15 +33,14 @@ ItemDictDialog::ItemDictDialog(const Game* game, const std::string& option_name,
 
   // Set up the source list
   wxPanel* lists_panel = new wxPanel(this, wxID_ANY);
-  wxStaticBoxSizer* lists_sizer =
-      new wxStaticBoxSizer(wxHORIZONTAL, lists_panel, "Option Values");
+  wxBoxSizer* lists_sizer =
+      new wxBoxSizer(wxHORIZONTAL);
 
   item_picker_ = new FilterableItemPicker(
-      lists_sizer->GetStaticBox(), wxID_ANY,
+      lists_panel, wxID_ANY,
       &GetOptionSetElements(*game_, option_definition_->name));
 
-  wxButton* add_btn =
-      new wxButton(lists_sizer->GetStaticBox(), wxID_ANY, "Add");
+  wxButton* add_btn = new wxButton(lists_panel, wxID_ANY, "Add");
   add_btn->Bind(wxEVT_BUTTON, &ItemDictDialog::OnAddClicked, this);
 
   wxBoxSizer* left_sizer = new wxBoxSizer(wxVERTICAL);
@@ -49,34 +49,26 @@ ItemDictDialog::ItemDictDialog(const Game* game, const std::string& option_name,
   left_sizer->Add(add_btn, wxSizerFlags().Center());
 
   lists_sizer->Add(left_sizer,
-                   wxSizerFlags().DoubleBorder().Proportion(1).Expand());
+                   wxSizerFlags().DoubleBorder().Proportion(1));
 
   // Set up the chosen list
-  value_panel_ = new wxScrolledWindow(lists_sizer->GetStaticBox(), wxID_ANY);
-  value_panel_->SetScrollRate(0, 5);
+  value_panel_ = new wxScrolledWindow(lists_panel, wxID_ANY);
+  value_panel_->SetScrollRate(5, 5);
 
-  value_sizer_ = new wxFlexGridSizer(3, 10, 10);
-  value_sizer_->AddGrowableCol(1);
-
-  const DoubleMap<std::string>& option_set =
-      GetOptionSetElements(*game_, option_name);
-  for (const auto& [id, amount] : option_value.dict_values) {
-    AddRow(option_set.GetValue(id), value_panel_, value_sizer_, amount);
-  }
-
-  value_panel_->SetSizerAndFit(value_sizer_);
+  value_sizer_ = new wxFlexGridSizer(3, 5, 5);
+  value_sizer_->AddGrowableCol(0);
+  value_panel_->SetSizer(value_sizer_);
 
   lists_sizer->Add(value_panel_,
                    wxSizerFlags().DoubleBorder().Proportion(1).Expand());
 
   lists_panel->SetSizerAndFit(lists_sizer);
-  top_sizer->Add(lists_panel, wxSizerFlags().DoubleBorder().Expand());
+  top_sizer->Add(lists_panel, wxSizerFlags().Expand());
   top_sizer->Add(CreateButtonSizer(wxOK | wxCANCEL), wxSizerFlags().Expand());
 
   // Finish up the form.
   SetSizer(top_sizer);
   Layout();
-  SetMinSize(GetSize());
   Fit();
 
   int width = option_header->GetClientSize().GetWidth();
@@ -88,6 +80,13 @@ ItemDictDialog::ItemDictDialog(const Game* game, const std::string& option_name,
 
   Fit();
   CentreOnParent();
+
+  // Load in existing values.
+  const DoubleMap<std::string>& option_set =
+      GetOptionSetElements(*game_, option_name);
+  for (const auto& [id, amount] : option_value.dict_values) {
+    AddRow(option_set.GetValue(id), value_panel_, value_sizer_, amount);
+  }
 }
 
 OptionValue ItemDictDialog::GetOptionValue() const {
@@ -117,8 +116,6 @@ void ItemDictDialog::OnAddClicked(wxCommandEvent& event) {
 
   value_panel_->Layout();
   value_panel_->FitInside();
-  Layout();
-  Fit();
 }
 
 void ItemDictDialog::AddRow(const std::string& value, wxWindow* parent,
@@ -135,7 +132,7 @@ void ItemDictDialog::AddRow(const std::string& value, wxWindow* parent,
   });
 
   wr.display_label = new wxStaticText(parent, wxID_ANY, value);
-  sizer->Add(wr.display_label);
+  sizer->Add(wr.display_label, wxSizerFlags().Align(wxALIGN_CENTRE_VERTICAL).Expand());
   sizer->Add(wr.spin_ctrl, wxSizerFlags().Expand());
 
   wr.delete_button = new wxButton(parent, wxID_ANY, "X", wxDefaultPosition,
