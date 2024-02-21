@@ -3,6 +3,7 @@
 #include <wx/statline.h>
 #include <wx/tglbtn.h>
 
+#include "item_dict_dialog.h"
 #include "option_set_dialog.h"
 #include "random_choice_dialog.h"
 #include "random_range_dialog.h"
@@ -253,8 +254,13 @@ FormOption::FormOption(WizardEditor* parent, wxWindow* container,
       sizer->Add(list_box_, wxSizerFlags().Expand());
     } else {
       open_choice_btn_ = new wxButton(container, wxID_ANY, "Edit option");
-      open_choice_btn_->Bind(wxEVT_BUTTON, &FormOption::OnOptionSetClicked,
-                             this);
+      if (game_option.type == kDictOption) {
+        open_choice_btn_->Bind(wxEVT_BUTTON, &FormOption::OnItemDictClicked,
+                               this);
+      } else {
+        open_choice_btn_->Bind(wxEVT_BUTTON, &FormOption::OnOptionSetClicked,
+                               this);
+      }
 
       sizer->Add(open_choice_btn_, wxSizerFlags().Expand());
     }
@@ -504,6 +510,23 @@ void FormOption::OnOptionSetClicked(wxCommandEvent& event) {
   }
 
   parent_->world_->SetOption(option_name_, osd.GetOptionValue());
+}
+
+void FormOption::OnItemDictClicked(wxCommandEvent& event) {
+  const Game& game =
+      parent_->game_definitions_->GetGame(parent_->world_->GetGame());
+  const OptionDefinition& game_option = game.GetOption(option_name_);
+
+  const OptionValue& ov = parent_->world_->HasOption(option_name_)
+                              ? parent_->world_->GetOption(option_name_)
+                              : game_option.default_value;
+
+  ItemDictDialog idd(&game, option_name_, ov);
+  if (idd.ShowModal() != wxID_OK) {
+    return;
+  }
+
+  parent_->world_->SetOption(option_name_, idd.GetOptionValue());
 }
 
 void FormOption::SaveToWorld() {

@@ -52,6 +52,8 @@ void FilterableItemPicker::UpdateSourceList() {
     source_list_->InsertItem(i, list_item);
     i++;
   }
+
+  source_list_->SetColumnWidth(0, wxLIST_AUTOSIZE);
 }
 
 void FilterableItemPicker::OnFilterEdited(wxCommandEvent&) {

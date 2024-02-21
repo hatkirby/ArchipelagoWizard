@@ -27,6 +27,7 @@ add_executable(ap_wizard
   src/util.cc
   src/option_set_dialog.cc
   src/filterable_item_picker.cc
+  src/item_dict_dialog.cc
 )
 set_property(TARGET ap_wizard PROPERTY CXX_STANDARD 20)
 set_property(TARGET ap_wizard PROPERTY CXX_STANDARD_REQUIRED ON)

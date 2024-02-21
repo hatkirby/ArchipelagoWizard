@@ -42,6 +42,7 @@ class FormOption {
   void OnListItemChecked(wxCommandEvent& event);
   void OnRandomClicked(wxCommandEvent& event);
   void OnOptionSetClicked(wxCommandEvent& event);
+  void OnItemDictClicked(wxCommandEvent& event);
 
   void SaveToWorld();
 

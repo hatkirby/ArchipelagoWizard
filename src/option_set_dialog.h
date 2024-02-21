@@ -8,7 +8,6 @@
 #endif
 
 #include <wx/dataview.h>
-#include <wx/listctrl.h>
 
 #include <set>
 #include <string>

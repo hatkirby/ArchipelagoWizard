@@ -1,13 +1,12 @@
-#include "option_set_dialog.h"
+#include "item_dict_dialog.h"
 
 #include "double_map.h"
 #include "filterable_item_picker.h"
 #include "util.h"
 
-OptionSetDialog::OptionSetDialog(const Game* game,
-                                 const std::string& option_name,
-                                 const OptionValue& option_value)
-    : wxDialog(nullptr, wxID_ANY, "Value Picker"),
+ItemDictDialog::ItemDictDialog(const Game* game, const std::string& option_name,
+                               const OptionValue& option_value)
+    : wxDialog(nullptr, wxID_ANY, "Item Configuration"),
       game_(game),
       option_definition_(&game->GetOption(option_name)) {
   // Initialize the form.
@@ -42,7 +41,7 @@ OptionSetDialog::OptionSetDialog(const Game* game,
 
   wxButton* add_btn =
       new wxButton(lists_sizer->GetStaticBox(), wxID_ANY, "Add");
-  add_btn->Bind(wxEVT_BUTTON, &OptionSetDialog::OnAddClicked, this);
+  add_btn->Bind(wxEVT_BUTTON, &ItemDictDialog::OnAddClicked, this);
 
   wxBoxSizer* left_sizer = new wxBoxSizer(wxVERTICAL);
   left_sizer->Add(item_picker_, wxSizerFlags().Proportion(1).Expand());
@@ -53,33 +52,21 @@ OptionSetDialog::OptionSetDialog(const Game* game,
                    wxSizerFlags().DoubleBorder().Proportion(1).Expand());
 
   // Set up the chosen list
-  chosen_list_ = new wxDataViewListCtrl(lists_sizer->GetStaticBox(), wxID_ANY);
-  chosen_list_->AppendTextColumn("Value");
+  value_panel_ = new wxScrolledWindow(lists_sizer->GetStaticBox(), wxID_ANY);
+  value_panel_->SetScrollRate(0, 5);
+
+  value_sizer_ = new wxFlexGridSizer(3, 10, 10);
+  value_sizer_->AddGrowableCol(1);
 
   const DoubleMap<std::string>& option_set =
       GetOptionSetElements(*game_, option_name);
-  for (int i = 0; i < option_value.set_values.size(); i++) {
-    if (option_value.set_values.at(i)) {
-      std::string str_val = option_set.GetValue(i);
-
-      wxVector<wxVariant> data;
-      data.push_back(wxVariant(str_val));
-      chosen_list_->AppendItem(data);
-
-      picked_.insert(str_val);
-    }
+  for (const auto& [id, amount] : option_value.dict_values) {
+    AddRow(option_set.GetValue(id), value_panel_, value_sizer_, amount);
   }
 
-  wxButton* remove_btn =
-      new wxButton(lists_sizer->GetStaticBox(), wxID_ANY, "Remove");
-  remove_btn->Bind(wxEVT_BUTTON, &OptionSetDialog::OnRemoveClicked, this);
+  value_panel_->SetSizerAndFit(value_sizer_);
 
-  wxBoxSizer* right_sizer = new wxBoxSizer(wxVERTICAL);
-  right_sizer->Add(chosen_list_, wxSizerFlags().Proportion(1).Expand());
-  right_sizer->AddSpacer(10);
-  right_sizer->Add(remove_btn, wxSizerFlags().Center());
-
-  lists_sizer->Add(right_sizer,
+  lists_sizer->Add(value_panel_,
                    wxSizerFlags().DoubleBorder().Proportion(1).Expand());
 
   lists_panel->SetSizerAndFit(lists_sizer);
@@ -103,43 +90,75 @@ OptionSetDialog::OptionSetDialog(const Game* game,
   CentreOnParent();
 }
 
-OptionValue OptionSetDialog::GetOptionValue() const {
+OptionValue ItemDictDialog::GetOptionValue() const {
   const DoubleMap<std::string>& option_set =
       GetOptionSetElements(*game_, option_definition_->name);
 
   OptionValue option_value;
-  option_value.set_values.resize(option_set.size());
 
-  for (const std::string& name : picked_) {
-    option_value.set_values[option_set.GetId(name)] = true;
+  for (const auto& [value, row] : values_) {
+    option_value.dict_values[option_set.GetId(value)] = row.amount;
   }
 
   return option_value;
 }
 
-void OptionSetDialog::OnAddClicked(wxCommandEvent& event) {
+void ItemDictDialog::OnAddClicked(wxCommandEvent& event) {
   std::optional<std::string> selected_text = item_picker_->GetSelected();
   if (!selected_text) {
     return;
   }
 
-  if (picked_.count(*selected_text)) {
+  if (values_.count(*selected_text)) {
     return;
   }
 
-  wxVector<wxVariant> data;
-  data.push_back(wxVariant(*selected_text));
-  chosen_list_->AppendItem(data);
+  AddRow(*selected_text, value_panel_, value_sizer_, 1);
 
-  picked_.insert(*selected_text);
+  value_panel_->Layout();
+  value_panel_->FitInside();
+  Layout();
+  Fit();
 }
 
-void OptionSetDialog::OnRemoveClicked(wxCommandEvent& event) {
-  int selection = chosen_list_->GetSelectedRow();
-  if (selection == wxNOT_FOUND) {
-    return;
-  }
+void ItemDictDialog::AddRow(const std::string& value, wxWindow* parent,
+                            wxSizer* sizer, int default_value) {
+  Row wr;
+  wr.amount = default_value;
+  wr.spin_ctrl =
+      new wxSpinCtrl(parent, wxID_ANY, "", wxDefaultPosition, wxDefaultSize,
+                     wxSP_ARROW_KEYS, 1, 1000, default_value);
 
-  picked_.erase(chosen_list_->GetTextValue(selection, 0).ToStdString());
-  chosen_list_->DeleteItem(selection);
+  wr.spin_ctrl->Bind(wxEVT_SPINCTRL, [this, value](wxSpinEvent&) {
+    Row& wr = values_[value];
+    wr.amount = wr.spin_ctrl->GetValue();
+  });
+
+  wr.display_label = new wxStaticText(parent, wxID_ANY, value);
+  sizer->Add(wr.display_label);
+  sizer->Add(wr.spin_ctrl, wxSizerFlags().Expand());
+
+  wr.delete_button = new wxButton(parent, wxID_ANY, "X", wxDefaultPosition,
+                                  wxDefaultSize, wxBU_EXACTFIT);
+  wr.delete_button->Bind(wxEVT_BUTTON, &ItemDictDialog::OnDeleteClicked, this);
+
+  sizer->Add(wr.delete_button);
+
+  value_by_delete_button_id_[wr.delete_button->GetId()] = value;
+
+  values_[value] = std::move(wr);
+}
+
+void ItemDictDialog::OnDeleteClicked(wxCommandEvent& event) {
+  std::string rrd_value = value_by_delete_button_id_[event.GetId()];
+  value_by_delete_button_id_.erase(event.GetId());
+
+  const Row& wr = values_[rrd_value];
+  wr.display_label->Destroy();
+  wr.spin_ctrl->Destroy();
+  wr.delete_button->Destroy();
+  Layout();
+  Fit();
+
+  values_.erase(rrd_value);
 }
