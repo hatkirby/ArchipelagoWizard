@@ -175,15 +175,22 @@ FormOption::FormOption(WizardEditor* parent, wxWindow* container,
       parent_->game_definitions_->GetGame(parent_->world_->GetGame());
   const OptionDefinition& game_option = game.GetOption(option_name_);
 
-  wxStaticText* option_label = new wxStaticText(container, wxID_ANY, "");
-  option_label->SetLabelText(game_option.display_name + ":");
-  option_label->Bind(wxEVT_ENTER_WINDOW, [parent, &game_option](wxMouseEvent&) {
-    if (parent->message_callback_) {
-      parent->message_callback_(game_option.display_name,
-                                game_option.description);
-    }
-  });
-  sizer->Add(option_label, wxSizerFlags().Align(wxALIGN_TOP | wxALIGN_LEFT));
+  option_label_ = new wxStaticText(container, wxID_ANY, "");
+  option_label_->SetLabelText(game_option.display_name + ":");
+  option_label_->Bind(
+      wxEVT_ENTER_WINDOW, [parent, &game_option](wxMouseEvent&) {
+        if (parent->message_callback_) {
+          if (parent->world_->HasOption(game_option.name) &&
+              parent->world_->GetOption(game_option.name).error) {
+            parent->message_callback_(
+                "Error", *parent->world_->GetOption(game_option.name).error);
+          } else {
+            parent->message_callback_(game_option.display_name,
+                                      game_option.description);
+          }
+        }
+      });
+  sizer->Add(option_label_, wxSizerFlags().Align(wxALIGN_TOP | wxALIGN_LEFT));
 
   bool randomizable = false;
 
@@ -289,6 +296,13 @@ void FormOption::PopulateFromWorld() {
   const OptionValue& ov = parent_->world_->HasOption(option_name_)
                               ? parent_->world_->GetOption(option_name_)
                               : game_option.default_value;
+
+  if (ov.error) {
+    option_label_->SetForegroundColour(*wxRED);
+  } else {
+    option_label_->SetForegroundColour(
+        option_label_->GetParent()->GetForegroundColour());
+  }
 
   if (game_option.type == kSelectOption) {
     if (ov.error) {

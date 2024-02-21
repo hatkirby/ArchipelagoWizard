@@ -49,6 +49,7 @@ class FormOption {
   WizardEditor* parent_;
 
   std::string option_name_;
+  wxStaticText* option_label_ = nullptr;
   wxChoice* combo_box_ = nullptr;
   wxSlider* slider_ = nullptr;
   wxStaticText* label_ = nullptr;
