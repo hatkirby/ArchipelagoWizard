@@ -27,6 +27,7 @@ class WizardFrame : public wxFrame {
   void OnSaveAsWorld(wxCommandEvent& event);
   void OnCloseWorld(wxCommandEvent& event);
   void OnExit(wxCommandEvent& event);
+  void OnAbout(wxCommandEvent& event);
   void OnWorldSelected(wxTreeEvent& event);
 
   void InitializeWorld(std::unique_ptr<World> world);

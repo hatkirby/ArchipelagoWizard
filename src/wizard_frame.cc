@@ -5,6 +5,7 @@
 
 #include <sstream>
 
+#include "version.h"
 #include "world_window.h"
 
 enum WizardFrameIds {
@@ -36,8 +37,12 @@ WizardFrame::WizardFrame()
   menuFile->Append(ID_CLOSE_WORLD, "&Close World\tCtrl-W");
   menuFile->Append(wxID_EXIT);
 
+  wxMenu* menuHelp = new wxMenu();
+  menuHelp->Append(wxID_ABOUT);
+
   wxMenuBar* menuBar = new wxMenuBar();
   menuBar->Append(menuFile, "&File");
+  menuBar->Append(menuHelp, "&Help");
 
   SetMenuBar(menuBar);
 
@@ -47,6 +52,7 @@ WizardFrame::WizardFrame()
   Bind(wxEVT_MENU, &WizardFrame::OnSaveAsWorld, this, ID_SAVE_AS_WORLD);
   Bind(wxEVT_MENU, &WizardFrame::OnCloseWorld, this, ID_CLOSE_WORLD);
   Bind(wxEVT_MENU, &WizardFrame::OnExit, this, wxID_EXIT);
+  Bind(wxEVT_MENU, &WizardFrame::OnAbout, this, wxID_ABOUT);
 
   splitter_window_ = new wxSplitterWindow(this, wxID_ANY);
   splitter_window_->SetMinimumPaneSize(250);
@@ -223,6 +229,15 @@ void WizardFrame::OnExit(wxCommandEvent& event) {
   }
 
   Close(true);
+}
+
+void WizardFrame::OnAbout(wxCommandEvent& event) {
+  std::ostringstream message_text;
+  message_text << "Archipelago Generation Wizard " << kWizardVersion
+               << " by hatkirby";
+
+  wxMessageBox(message_text.str(), "About ArchipelagoWizard",
+               wxOK | wxICON_INFORMATION);
 }
 
 void WizardFrame::OnWorldSelected(wxTreeEvent& event) {
