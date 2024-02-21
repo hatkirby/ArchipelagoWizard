@@ -6,6 +6,7 @@
 WorldWindow::WorldWindow(wxWindow* parent,
                          const GameDefinitions* game_definitions)
     : wxNotebook(parent, wxID_ANY), game_definitions_(game_definitions) {
+  Bind(wxEVT_NOTEBOOK_PAGE_CHANGING, &WorldWindow::OnPageChanging, this);
   Bind(wxEVT_NOTEBOOK_PAGE_CHANGED, &WorldWindow::OnPageChanged, this);
 
   wizard_editor_ = new WizardEditor(this, game_definitions_);
@@ -31,11 +32,24 @@ void WorldWindow::SaveWorld() {
   }
 }
 
-void WorldWindow::OnPageChanged(wxBookCtrlEvent& event) {
+void WorldWindow::OnPageChanging(wxBookCtrlEvent& event) {
   if (event.GetOldSelection() == 1) {
-    yaml_editor_->SaveWorld();
-  }
+    try {
+      yaml_editor_->SaveWorld();
+    } catch (const std::exception& ex) {
+      wxString msg;
+      msg << "Could not save world.\n\n";
+      msg << ex.what();
+      msg << "\n\nWould you like to discard your changes?";
 
+      if (wxMessageBox(msg, "Failure to save world", wxYES_NO) == wxNO) {
+        event.Veto();
+      }
+    }
+  }
+}
+
+void WorldWindow::OnPageChanged(wxBookCtrlEvent& event) {
   if (GetSelection() == 0) {
     wizard_editor_->Reload();
   } else if (GetSelection() == 1) {

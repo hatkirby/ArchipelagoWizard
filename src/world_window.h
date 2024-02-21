@@ -28,6 +28,7 @@ class WorldWindow : public wxNotebook {
       std::function<void(const wxString&, const wxString&)> callback);
 
  private:
+  void OnPageChanging(wxBookCtrlEvent& event);
   void OnPageChanged(wxBookCtrlEvent& event);
 
   const GameDefinitions* game_definitions_;
