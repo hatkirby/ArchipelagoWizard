@@ -150,7 +150,7 @@ GameDefinitions::GameDefinitions() {
       } else if (option.name == "non_local_items") {
         option.type = kSetOption;
         option.set_type = kItemSet;
-        option.display_name = "Not Local Items";
+        option.display_name = "Non-Local Items";
         option.description =
             "Forces these items to be outside their native world.";
       } else if (option.name == "start_inventory") {
@@ -190,7 +190,7 @@ GameDefinitions::GameDefinitions() {
         option.set_type = kLocationSet;
         option.display_name = "Priority Locations";
         option.description =
-            "Prevent these locations from having an unimportant item.";
+            "Force these locations to have an important item.";
       } else if (option.name == "item_links") {
         option.type = kUNKNOWN_OPTION_TYPE;
         option.display_name = "Item Links";
