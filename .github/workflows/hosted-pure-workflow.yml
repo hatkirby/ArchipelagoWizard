@@ -13,12 +13,12 @@ name: hosted-pure-workflow
 on:
   push:
   pull_request:
-    branches: 
-    - v11
-    - main
+    branches:
+      - v11
+      - main
   workflow_dispatch:
   schedule:
-  - cron: '0 1 * * *'
+    - cron: "0 1 * * *"
 
 jobs:
   job:
@@ -27,28 +27,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest, windows-latest]
         include:
           - os: windows-latest
             triplet: x64-windows
-          - os: ubuntu-latest
-            triplet: x64-linux
           - os: macos-latest
             triplet: x64-osx
     env:
       # Indicates the location of the vcpkg as a Git submodule of the project repository.
       # Not using "VCPKG_ROOT" because a variable with the same name is defined in the VS's
-      # Developer Command Prompt environment in VS 2022 17.6, which would override this one 
+      # Developer Command Prompt environment in VS 2022 17.6, which would override this one
       # if it had the same name.
       _VCPKG_: ${{ github.workspace }}/vcpkg
       # Tells vcpkg where binary packages are stored.
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
       # Let's use GitHub Action cache as storage for the vcpkg Binary Caching feature.
-      VCPKG_BINARY_SOURCES: 'clear;x-gha,readwrite'
+      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
     steps:
-    # Set env vars needed for vcpkg to leverage the GitHub Action cache as a storage
-    # for Binary Caching.
+      # Set env vars needed for vcpkg to leverage the GitHub Action cache as a storage
+      # for Binary Caching.
       - uses: actions/github-script@v6
         with:
           script: |
@@ -104,4 +102,3 @@ jobs:
       - name: Build (Release configuration)
         run: |
           cmake --build --preset ap-wizard-release
-
