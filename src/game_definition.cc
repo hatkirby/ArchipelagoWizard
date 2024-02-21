@@ -8,7 +8,7 @@
 #include "util.h"
 
 GameDefinitions::GameDefinitions() {
-  std::ifstream datafile("dumped-options.json");
+  std::ifstream datafile(GetAbsolutePath("dumped-options.json"));
   nlohmann::ordered_json all_games = nlohmann::ordered_json::parse(datafile);
 
   for (const auto& [game_name, game_data] : all_games.items()) {

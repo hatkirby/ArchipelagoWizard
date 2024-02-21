@@ -1,5 +1,7 @@
 #include "util.h"
 
+#include <whereami.h>
+
 #include <sstream>
 
 OptionValue GetRandomOptionValueFromString(std::string descriptor) {
@@ -105,4 +107,21 @@ const DoubleMap<std::string>& GetOptionSetElements(
   }
 
   throw std::invalid_argument("Invalid option set type.");
+}
+
+const std::filesystem::path& GetExecutableDirectory() {
+  static const std::filesystem::path* executable_directory = []() {
+    int length = wai_getExecutablePath(NULL, 0, NULL);
+    std::string buf(length, 0);
+    wai_getExecutablePath(buf.data(), length, NULL);
+
+    std::filesystem::path exec_path(buf);
+    return new std::filesystem::path(exec_path.parent_path());
+  }();
+
+  return *executable_directory;
+}
+
+std::string GetAbsolutePath(std::string_view path) {
+  return (GetExecutableDirectory() / path).string();
 }

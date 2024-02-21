@@ -1,8 +1,10 @@
 #ifndef UTIL_H_84145E76
 #define UTIL_H_84145E76
 
+#include <filesystem>
 #include <iterator>
 #include <string>
+#include <string_view>
 
 #include "double_map.h"
 #include "game_definition.h"
@@ -40,5 +42,9 @@ std::string RandomOptionValueToString(const OptionValue& option_value);
 
 const DoubleMap<std::string>& GetOptionSetElements(
     const Game& game, const std::string& option_name);
+
+const std::filesystem::path& GetExecutableDirectory();
+
+std::string GetAbsolutePath(std::string_view path);
 
 #endif /* end of include guard: UTIL_H_84145E76 */

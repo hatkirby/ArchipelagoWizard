@@ -11,6 +11,7 @@ find_package(yaml-cpp REQUIRED)
 
 include_directories(
   vendor/nlohmann
+  vendor/whereami
   ${yaml-cpp_INCLUDE_DIRS}
 )
 
@@ -28,6 +29,7 @@ add_executable(ap_wizard
   src/option_set_dialog.cc
   src/filterable_item_picker.cc
   src/item_dict_dialog.cc
+  vendor/whereami/whereami.c
 )
 set_property(TARGET ap_wizard PROPERTY CXX_STANDARD 20)
 set_property(TARGET ap_wizard PROPERTY CXX_STANDARD_REQUIRED ON)
