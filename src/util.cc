@@ -61,6 +61,9 @@ OptionValue GetRandomOptionValueFromString(std::string descriptor) {
     int max = std::stoi(parts[it + 1]);
 
     result.range_subset = std::tuple<int, int>(min, max);
+
+    it++;
+    it++;
   }
 
   if (it != parts.size()) {
