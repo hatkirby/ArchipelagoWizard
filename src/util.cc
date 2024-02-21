@@ -29,7 +29,12 @@ OptionValue GetRandomOptionValueFromString(std::string descriptor) {
 
     // It's an error for there to be no parts after "range".
     if (it == parts.size()) {
-      result.error = "Ranged random specifier missing min and max values.";
+      wxString error;
+      error << "Ranged random specifier \"";
+      error << descriptor;
+      error << "\" missing min and max values.";
+
+      result.error = error.ToStdString();
       return result;
     }
   }
@@ -48,12 +53,22 @@ OptionValue GetRandomOptionValueFromString(std::string descriptor) {
 
   if (is_range) {
     if (it == parts.size()) {
-      result.error = "Ranged random specifier missing min and max values.";
+      wxString error;
+      error << "Ranged random specifier \"";
+      error << descriptor;
+      error << "\" missing min and max values.";
+
+      result.error = error.ToStdString();
       return result;
     }
 
     if (it + 1 == parts.size()) {
-      result.error = "Ranged random specifier missing max value.";
+      wxString error;
+      error << "Ranged random specifier \"";
+      error << descriptor;
+      error << "\" missing max value.";
+
+      result.error = error.ToStdString();
       return result;
     }
 
@@ -67,7 +82,12 @@ OptionValue GetRandomOptionValueFromString(std::string descriptor) {
   }
 
   if (it != parts.size()) {
-    result.error = "Malformed random specifier.";
+    wxString error;
+    error << "Malformed random specifier \"";
+    error << descriptor;
+    error << "\".";
+
+    result.error = error.ToStdString();
   }
 
   return result;

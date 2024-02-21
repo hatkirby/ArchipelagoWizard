@@ -18,7 +18,12 @@ OptionValue OptionValueForChoiceValue(const OptionDefinition& option,
   } else if (str_val == "random") {
     option_value.random = true;
   } else {
-    option_value.error = "Unknown value.";
+    wxString error;
+    error << "Unknown value \"";
+    error << str_val;
+    error << "\".";
+
+    option_value.error = error.ToStdString();
   }
 
   return option_value;
@@ -38,12 +43,27 @@ OptionValue OptionValueForRangeValue(const OptionDefinition& option,
       option_value.int_value = node.as<int>();
 
       if (option_value.int_value < option.min_value) {
-        option_value.error = "Value is too small.";
+        wxString error;
+        error << "Value ";
+        error << str_val;
+        error << " is too small.";
+
+        option_value.error = error.ToStdString();
       } else if (option_value.int_value > option.max_value) {
-        option_value.error = "Value is too large.";
+        wxString error;
+        error << "Value ";
+        error << str_val;
+        error << " is too large.";
+
+        option_value.error = error.ToStdString();
       }
     } catch (const std::exception&) {
-      option_value.error = "Value is not numeric or random.";
+      wxString error;
+      error << "Invalid value \"";
+      error << str_val;
+      error << "\".";
+
+      option_value.error = error.ToStdString();
     }
   }
 
@@ -241,6 +261,7 @@ void World::PopulateFromYaml() {
             } else if (game_node[option.name].IsMap()) {
               option_value.random = true;
 
+              std::vector<wxString> errors;
               for (YAML::const_iterator it = game_node[option.name].begin();
                    it != game_node[option.name].end(); it++) {
                 OptionValue sub_option_value;
@@ -252,11 +273,19 @@ void World::PopulateFromYaml() {
                       OptionValueForRangeValue(option, it->first);
                 }
 
+                if (sub_option_value.error) {
+                  errors.push_back(*sub_option_value.error);
+                }
+
                 try {
                   sub_option_value.weight = it->second.as<int>();
                 } catch (const std::exception&) {
-                  option_value.error = "Invalid weight value.";
-                  break;
+                  wxString error;
+                  error << "Weight value \"";
+                  error << it->second.as<std::string>();
+                  error << "\" is not numeric.";
+
+                  errors.push_back(error);
                 }
 
                 if (sub_option_value.weight > 0) {
@@ -266,8 +295,11 @@ void World::PopulateFromYaml() {
 
               if (option_value.weighting.size() == 1) {
                 OptionValue sub_option_value = option_value.weighting.front();
-                sub_option_value.error = option_value.error;
                 option_value = sub_option_value;
+              }
+
+              if (!errors.empty()) {
+                option_value.error = implode(errors).ToStdString();
               }
             }
           } else if (option.type == kSetOption) {
@@ -276,9 +308,24 @@ void World::PopulateFromYaml() {
             option_value.set_values.resize(option_set.size());
 
             if (game_node[option.name].IsSequence()) {
+              std::vector<wxString> errors;
+
               for (const YAML::Node& set_value : game_node[option.name]) {
                 std::string str_val = set_value.as<std::string>();
-                option_value.set_values[option_set.GetId(str_val)] = true;
+                if (option_set.HasValue(str_val)) {
+                  option_value.set_values[option_set.GetId(str_val)] = true;
+                } else {
+                  wxString msg;
+                  msg << "Invalid value \"";
+                  msg << str_val;
+                  msg << "\".";
+
+                  errors.push_back(msg);
+                }
+              }
+
+              if (!errors.empty()) {
+                option_value.error = implode(errors).ToStdString();
               }
             } else {
               option_value.error = "Option value should be a list.";
@@ -288,12 +335,27 @@ void World::PopulateFromYaml() {
                 GetOptionSetElements(game, option.name);
 
             if (game_node[option.name].IsMap()) {
+              std::vector<wxString> errors;
+
               for (YAML::const_iterator it = game_node[option.name].begin();
                    it != game_node[option.name].end(); it++) {
                 std::string str_val = it->first.as<std::string>();
                 int int_val = it->second.as<int>();
 
-                option_value.dict_values[option_set.GetId(str_val)] = int_val;
+                if (option_set.HasValue(str_val)) {
+                  option_value.dict_values[option_set.GetId(str_val)] = int_val;
+                } else {
+                  wxString msg;
+                  msg << "Invalid value \"";
+                  msg << str_val;
+                  msg << "\".";
+
+                  errors.push_back(msg);
+                }
+              }
+
+              if (!errors.empty()) {
+                option_value.error = implode(errors).ToStdString();
               }
             } else {
               option_value.error = "Option value should be a map.";

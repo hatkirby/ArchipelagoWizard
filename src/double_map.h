@@ -12,6 +12,8 @@ class DoubleMap {
     forward_.push_back(value);
   }
 
+  bool HasValue(const T& value) const { return backward_.count(value); }
+
   size_t GetId(const T& value) const { return backward_.at(value); }
 
   const T& GetValue(size_t id) const { return forward_.at(id); }

@@ -1,6 +1,14 @@
 #ifndef UTIL_H_84145E76
 #define UTIL_H_84145E76
 
+#include <wx/wxprec.h>
+
+#ifndef WX_PRECOMP
+#include <wx/wx.h>
+#endif
+
+#include <wx/textfile.h>
+
 #include <filesystem>
 #include <iterator>
 #include <string>
@@ -8,6 +16,31 @@
 
 #include "double_map.h"
 #include "game_definition.h"
+
+template <class InputIterator>
+wxString implode(InputIterator first, InputIterator last, wxString delimiter) {
+  wxString result;
+
+  for (InputIterator it = first; it != last; it++) {
+    if (it != first) {
+      result << delimiter;
+    }
+
+    result << *it;
+  }
+
+  return result;
+}
+
+template <class Container>
+wxString implode(const Container& container, wxString delimiter) {
+  return implode(container.begin(), container.end(), delimiter);
+}
+
+template <class Container>
+wxString implode(const Container& container) {
+  return implode(container.begin(), container.end(), wxTextFile::GetEOL());
+}
 
 template <class OutputIterator>
 void split(std::string input, std::string delimiter, OutputIterator out) {
