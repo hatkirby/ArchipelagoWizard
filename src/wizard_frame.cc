@@ -11,6 +11,8 @@ enum WizardFrameIds {
   ID_NEW_WORLD = 1,
   ID_LOAD_WORLD = 2,
   ID_SAVE_WORLD = 3,
+  ID_CLOSE_WORLD = 4,
+  ID_SAVE_AS_WORLD = 5,
 };
 
 class WorldEntryData : public wxTreeItemData {
@@ -30,6 +32,8 @@ WizardFrame::WizardFrame()
   menuFile->Append(ID_NEW_WORLD, "&New World\tCtrl-N");
   menuFile->Append(ID_LOAD_WORLD, "&Load World from File\tCtrl-O");
   menuFile->Append(ID_SAVE_WORLD, "&Save World\tCtrl-S");
+  menuFile->Append(ID_SAVE_AS_WORLD, "Save World As...\tCtrl-Shift-S");
+  menuFile->Append(ID_CLOSE_WORLD, "&Close World\tCtrl-W");
   menuFile->Append(wxID_EXIT);
 
   wxMenuBar* menuBar = new wxMenuBar();
@@ -40,6 +44,8 @@ WizardFrame::WizardFrame()
   Bind(wxEVT_MENU, &WizardFrame::OnNewWorld, this, ID_NEW_WORLD);
   Bind(wxEVT_MENU, &WizardFrame::OnLoadWorld, this, ID_LOAD_WORLD);
   Bind(wxEVT_MENU, &WizardFrame::OnSaveWorld, this, ID_SAVE_WORLD);
+  Bind(wxEVT_MENU, &WizardFrame::OnSaveAsWorld, this, ID_SAVE_AS_WORLD);
+  Bind(wxEVT_MENU, &WizardFrame::OnCloseWorld, this, ID_CLOSE_WORLD);
   Bind(wxEVT_MENU, &WizardFrame::OnExit, this, wxID_EXIT);
 
   splitter_window_ = new wxSplitterWindow(this, wxID_ANY);
@@ -117,36 +123,117 @@ void WizardFrame::OnLoadWorld(wxCommandEvent& event) {
 }
 
 void WizardFrame::OnSaveWorld(wxCommandEvent& event) {
+  if (!world_list_->GetSelection().IsOk()) {
+    return;
+  }
+
+  world_window_->SaveWorld();
+
   const WorldEntryData* data = dynamic_cast<WorldEntryData*>(
       world_list_->GetItemData(world_list_->GetSelection()));
   World& world = *worlds_.at(data->index);
-
-  if (!world.HasFilename()) {
-    wxFileDialog saveFileDialog(this, "Save World YAML", "", "",
-                                "YAML files (*.yaml;*.yml)|*.yaml;*.yml",
-                                wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-
-    if (saveFileDialog.ShowModal() == wxID_CANCEL) {
-      return;
-    }
-
-    world.SetFilename(saveFileDialog.GetPath().ToStdString());
-  }
-
-  try {
-    world.Save(world.GetFilename());
-  } catch (const std::exception& ex) {
-    wxMessageBox(ex.what(), "Error saving World", wxOK, this);
-  }
+  AttemptSaveWorld(world);
 }
 
-void WizardFrame::OnExit(wxCommandEvent& event) { Close(true); }
+void WizardFrame::OnSaveAsWorld(wxCommandEvent& event) {
+  if (!world_list_->GetSelection().IsOk()) {
+    return;
+  }
+
+  world_window_->SaveWorld();
+
+  const WorldEntryData* data = dynamic_cast<WorldEntryData*>(
+      world_list_->GetItemData(world_list_->GetSelection()));
+  World& world = *worlds_.at(data->index);
+  AttemptSaveWorld(world, /*force_dialog=*/true);
+}
+
+void WizardFrame::OnCloseWorld(wxCommandEvent& event) {
+  if (world_list_->GetRootItem() == world_list_->GetSelection()) {
+    return;
+  }
+
+  world_window_->SaveWorld();
+
+  const WorldEntryData* data = dynamic_cast<WorldEntryData*>(
+      world_list_->GetItemData(world_list_->GetSelection()));
+  World& world = *worlds_.at(data->index);
+  if (world.IsDirty()) {
+    wxString message_text;
+    message_text << "\"";
+
+    if (world.GetName() == "") {
+      message_text << "Untitled World";
+    } else {
+      message_text << world.GetName();
+    }
+
+    if (world.HasGame()) {
+      message_text << " [" << world.GetGame() << "]";
+    }
+
+    message_text << "\" has unsaved changes. Would you like to save them?";
+
+    int result =
+        wxMessageBox(message_text, "Confirm", wxYES_NO | wxCANCEL, this);
+    if (result == wxCANCEL) {
+      return;
+    } else if (result == wxYES) {
+      if (!AttemptSaveWorld(world)) {
+        return;
+      }
+    }
+  }
+
+  worlds_.erase(std::next(worlds_.begin(), data->index));
+  world_list_->Delete(world_list_->GetSelection());
+
+  SyncWorldIndices();
+}
+
+void WizardFrame::OnExit(wxCommandEvent& event) {
+  for (std::unique_ptr<World>& world : worlds_) {
+    if (world->IsDirty()) {
+      wxString message_text;
+      message_text << "\"";
+
+      if (world->GetName() == "") {
+        message_text << "Untitled World";
+      } else {
+        message_text << world->GetName();
+      }
+
+      if (world->HasGame()) {
+        message_text << " [" << world->GetGame() << "]";
+      }
+
+      message_text << "\" has unsaved changes. Would you like to save them "
+                      "before quitting?";
+
+      int result =
+          wxMessageBox(message_text, "Confirm", wxYES_NO | wxCANCEL, this);
+      if (result == wxCANCEL) {
+        return;
+      } else if (result == wxYES) {
+        if (!AttemptSaveWorld(*world)) {
+          return;
+        }
+      }
+    }
+  }
+
+  Close(true);
+}
 
 void WizardFrame::OnWorldSelected(wxTreeEvent& event) {
-  const WorldEntryData* data =
-      dynamic_cast<WorldEntryData*>(world_list_->GetItemData(event.GetItem()));
-  world_window_->LoadWorld(worlds_.at(data->index).get());
-  world_window_->Show();
+  if (event.GetItem() == world_list_->GetRootItem()) {
+    world_window_->Hide();
+  } else {
+    const WorldEntryData* data = dynamic_cast<WorldEntryData*>(
+        world_list_->GetItemData(event.GetItem()));
+    world_window_->LoadWorld(worlds_.at(data->index).get());
+    world_window_->Show();
+  }
 }
 
 void WizardFrame::InitializeWorld(std::unique_ptr<World> world) {
@@ -181,6 +268,10 @@ void WizardFrame::SyncWorldIndices() {
 
 void WizardFrame::UpdateWorldDisplay(World* world, wxTreeItemId tree_item_id) {
   std::ostringstream world_display;
+  if (world->IsDirty()) {
+    world_display << "*";
+  }
+
   if (world->GetName() == "") {
     world_display << "Untitled World";
   } else {
@@ -206,4 +297,28 @@ void WizardFrame::ShowMessage(const wxString& header, const wxString& msg) {
   message_pane_->Layout();
   message_pane_->FitInside();
   message_pane_->Scroll(0, 0);
+}
+
+bool WizardFrame::AttemptSaveWorld(World& world, bool force_dialog) {
+  if (!world.HasFilename() || force_dialog) {
+    wxFileDialog saveFileDialog(this, "Save World YAML", "", "",
+                                "YAML files (*.yaml;*.yml)|*.yaml;*.yml",
+                                wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+
+    if (saveFileDialog.ShowModal() == wxID_CANCEL) {
+      return false;
+    }
+
+    world.SetFilename(saveFileDialog.GetPath().ToStdString());
+  }
+
+  try {
+    world.Save(world.GetFilename());
+  } catch (const std::exception& ex) {
+    wxMessageBox(ex.what(), "Error saving World", wxOK, this);
+
+    return false;
+  }
+
+  return true;
 }

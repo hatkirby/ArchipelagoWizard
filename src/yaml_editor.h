@@ -26,6 +26,7 @@ class YamlEditor : public wxPanel {
   World* world_;
 
   bool dirty_ = false;
+  bool ignore_edit_ = false;
 };
 
 #endif /* end of include guard: YAML_EDITOR_H_BB0F5830 */

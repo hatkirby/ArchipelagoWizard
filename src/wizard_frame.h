@@ -24,6 +24,8 @@ class WizardFrame : public wxFrame {
   void OnNewWorld(wxCommandEvent& event);
   void OnLoadWorld(wxCommandEvent& event);
   void OnSaveWorld(wxCommandEvent& event);
+  void OnSaveAsWorld(wxCommandEvent& event);
+  void OnCloseWorld(wxCommandEvent& event);
   void OnExit(wxCommandEvent& event);
   void OnWorldSelected(wxTreeEvent& event);
 
@@ -31,6 +33,7 @@ class WizardFrame : public wxFrame {
   void SyncWorldIndices();
   void UpdateWorldDisplay(World* world, wxTreeItemId tree_item_id);
   void ShowMessage(const wxString& header, const wxString& msg);
+  bool AttemptSaveWorld(World& world, bool force_dialog = false);
 
   wxSplitterWindow* splitter_window_;
   wxTreeCtrl* world_list_;

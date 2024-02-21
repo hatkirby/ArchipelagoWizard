@@ -25,6 +25,12 @@ void WorldWindow::LoadWorld(World* world) {
   }
 }
 
+void WorldWindow::SaveWorld() {
+  if (GetSelection() == 1) {
+    yaml_editor_->SaveWorld();
+  }
+}
+
 void WorldWindow::OnPageChanged(wxBookCtrlEvent& event) {
   if (event.GetOldSelection() == 1) {
     yaml_editor_->SaveWorld();

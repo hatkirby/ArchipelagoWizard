@@ -22,6 +22,8 @@ class WorldWindow : public wxNotebook {
 
   void LoadWorld(World* world);
 
+  void SaveWorld();
+
   void SetMessageCallback(
       std::function<void(const wxString&, const wxString&)> callback);
 

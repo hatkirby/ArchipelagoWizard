@@ -57,6 +57,16 @@ class World {
     meta_update_callback_ = callback;
   }
 
+  bool IsDirty() const { return dirty_; }
+
+  void SetDirty(bool v) {
+    dirty_ = v;
+
+    if (meta_update_callback_) {
+      meta_update_callback_();
+    }
+  }
+
  private:
   void PopulateFromYaml();
 
@@ -67,6 +77,7 @@ class World {
   std::map<std::string, OptionValue> options_;
 
   std::optional<std::string> filename_;
+  bool dirty_ = false;
 
   YAML::Node yaml_;
 

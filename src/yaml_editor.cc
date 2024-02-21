@@ -35,6 +35,9 @@ YamlEditor::YamlEditor(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
 
   editor_->SetCaretForeground(wxColour(204, 204, 204));
 
+  editor_->SetModEventMask(wxSTC_MOD_INSERTTEXT | wxSTC_MOD_DELETETEXT |
+                           wxSTC_PERFORMED_USER | wxSTC_PERFORMED_UNDO |
+                           wxSTC_PERFORMED_REDO);
   editor_->Bind(wxEVT_STC_CHANGE, &YamlEditor::OnTextEdited, this);
 
   wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
@@ -44,8 +47,11 @@ YamlEditor::YamlEditor(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
 
 void YamlEditor::LoadWorld(World* world) {
   world_ = world;
+  dirty_ = false;
 
+  ignore_edit_ = true;
   editor_->SetText(world_->ToYaml());
+  ignore_edit_ = false;
 }
 
 void YamlEditor::SaveWorld() {
@@ -55,4 +61,13 @@ void YamlEditor::SaveWorld() {
   }
 }
 
-void YamlEditor::OnTextEdited(wxStyledTextEvent& event) { dirty_ = true; }
+void YamlEditor::OnTextEdited(wxStyledTextEvent& event) {
+  if (ignore_edit_) {
+    return;
+  }
+
+  dirty_ = true;
+  if (!world_->IsDirty()) {
+    world_->SetDirty(true);
+  }
+}

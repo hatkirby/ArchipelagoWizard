@@ -72,6 +72,8 @@ void World::SetName(std::string name) {
 void World::Save(const std::string& filename) {
   std::ofstream file_stream(filename);
   file_stream << yaml_ << std::endl;
+
+  SetDirty(false);
 }
 
 void World::FromYaml(const std::string& text) {
@@ -91,6 +93,7 @@ void World::SetGame(const std::string& game) {
 
   game_ = game;
   yaml_["game"] = game;
+  dirty_ = true;
 
   if (meta_update_callback_) {
     meta_update_callback_();
@@ -103,6 +106,7 @@ void World::UnsetGame() {
   }
 
   game_ = std::nullopt;
+  dirty_ = true;
   options_.clear();
 
   if (meta_update_callback_) {
@@ -122,6 +126,10 @@ void World::SetOption(const std::string& option_name,
                       OptionValue option_value) {
   const Game& game = game_definitions_->GetGame(*game_);
   const OptionDefinition& option = game.GetOption(option_name);
+
+  if (!dirty_) {
+    SetDirty(true);
+  }
 
   yaml_[*game_].remove(option_name);
   if (option.type == kSelectOption) {
