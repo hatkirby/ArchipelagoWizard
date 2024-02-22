@@ -227,7 +227,7 @@ FormOption::FormOption(WizardEditor* parent, wxWindow* container,
 
       for (const auto& [value_value, value_name] :
            game_option.value_names.GetItems()) {
-        combo_box_->Append(value_name);
+        combo_box_->Append(ConvertToTitleCase(value_name));
       }
       combo_box_->Append("Custom");
 
@@ -346,12 +346,12 @@ void FormOption::PopulateFromWorld() {
       random_button_->SetValue(false);
 
       if (game_option.named_range) {
-        std::optional<std::string> findstr =
-            game_option.value_names.GetByKeyOptional(ov.int_value);
-        if (!findstr) {
-          findstr = "Custom";
+        if (game_option.value_names.HasKey(ov.int_value)) {
+          combo_box_->SetSelection(
+              game_option.value_names.GetKeyId(ov.int_value));
+        } else {
+          combo_box_->SetSelection(combo_box_->GetCount() - 1);
         }
-        combo_box_->SetSelection(combo_box_->FindString(*findstr));
         combo_box_->Enable();
       }
     }
@@ -390,13 +390,13 @@ void FormOption::OnRangeSliderChanged(wxCommandEvent& event) {
         parent_->game_definitions_->GetGame(parent_->world_->GetGame());
     const OptionDefinition& game_option = game.GetOption(option_name_);
 
-    std::optional<std::string> findstr =
-        game_option.value_names.GetByKeyOptional(slider_->GetValue());
-    if (!findstr) {
-      findstr = "Custom";
+    int selection;
+    if (game_option.value_names.HasKey(slider_->GetValue())) {
+      selection = game_option.value_names.GetKeyId(slider_->GetValue());
+    } else {
+      selection = combo_box_->GetCount() - 1;
     }
 
-    int selection = combo_box_->FindString(*findstr);
     if (combo_box_->GetSelection() != selection) {
       combo_box_->SetSelection(selection);
     }
@@ -414,23 +414,19 @@ void FormOption::OnNamedRangeChanged(wxCommandEvent& event) {
       parent_->game_definitions_->GetGame(parent_->world_->GetGame());
   const OptionDefinition& game_option = game.GetOption(option_name_);
 
-  std::string str_sel =
-      combo_box_->GetString(combo_box_->GetSelection()).ToStdString();
-  std::optional<int> result =
-      game_option.value_names.GetByValueOptional(str_sel);
-  if (!result) {
-    result = slider_->GetValue();
-  }
+  if (game_option.value_names.HasId(combo_box_->GetSelection())) {
+    int result = game_option.value_names.GetKeyById(combo_box_->GetSelection());
 
-  if (result != slider_->GetValue()) {
-    slider_->SetValue(*result);
+    if (result != slider_->GetValue()) {
+      slider_->SetValue(result);
 
-    if (label_ != nullptr) {
-      label_->SetLabel(std::to_string(slider_->GetValue()));
-      label_->GetContainingSizer()->Layout();
+      if (label_ != nullptr) {
+        label_->SetLabel(std::to_string(slider_->GetValue()));
+        label_->GetContainingSizer()->Layout();
+      }
+
+      SaveToWorld();
     }
-
-    SaveToWorld();
   }
 }
 

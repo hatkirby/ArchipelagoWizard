@@ -43,25 +43,25 @@ wxString implode(const Container& container) {
 }
 
 template <class OutputIterator>
-void split(std::string input, std::string delimiter, OutputIterator out) {
+void split(wxString input, wxString delimiter, OutputIterator out) {
   while (!input.empty()) {
-    int divider = input.find(delimiter);
-    if (divider == std::string::npos) {
+    int divider = input.Find(delimiter);
+    if (divider == wxNOT_FOUND) {
       *out = input;
       out++;
 
       input = "";
     } else {
-      *out = input.substr(0, divider);
+      *out = input.Mid(0, divider);
       out++;
 
-      input = input.substr(divider + delimiter.length());
+      input = input.Mid(divider + delimiter.Length());
     }
   }
 }
 
 template <class Container>
-Container split(std::string input, std::string delimiter) {
+Container split(wxString input, wxString delimiter) {
   Container result;
 
   split(input, delimiter, std::back_inserter(result));
@@ -69,7 +69,7 @@ Container split(std::string input, std::string delimiter) {
   return result;
 }
 
-OptionValue GetRandomOptionValueFromString(std::string descriptor);
+OptionValue GetRandomOptionValueFromString(wxString descriptor);
 
 std::string RandomOptionValueToString(const OptionValue& option_value);
 
@@ -79,5 +79,7 @@ const DoubleMap<std::string>& GetOptionSetElements(
 const std::filesystem::path& GetExecutableDirectory();
 
 std::string GetAbsolutePath(std::string_view path);
+
+wxString ConvertToTitleCase(wxString input);
 
 #endif /* end of include guard: UTIL_H_84145E76 */
