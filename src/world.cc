@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 
 #include "util.h"
 #include "wizard_frame.h"
@@ -89,6 +90,12 @@ void World::SetName(std::string name) {
   }
 }
 
+void World::SetDescription(const std::string& v) {
+  description_ = v;
+
+  yaml_["description"] = description_;
+}
+
 void World::Save(const std::string& filename) {
   std::ofstream file_stream(filename);
   file_stream << yaml_ << std::endl;
@@ -97,9 +104,16 @@ void World::Save(const std::string& filename) {
 }
 
 void World::FromYaml(const std::string& text) {
+  YAML::Node old_node = Clone(yaml_);
   yaml_ = YAML::Load(text);
 
-  PopulateFromYaml();
+  try {
+    PopulateFromYaml();
+  } catch (const std::exception& ex) {
+    yaml_ = old_node;
+
+    throw;
+  }
 }
 
 std::string World::ToYaml() const {
@@ -231,10 +245,23 @@ void World::UnsetOption(const std::string& option_name) {
 }
 
 void World::PopulateFromYaml() {
+  if (yaml_["game"] &&
+      !game_definitions_->HasGame(yaml_["game"].as<std::string>())) {
+    wxString error;
+    error << "Game \"";
+    error << yaml_["game"].as<std::string>();
+    error << "\" is not supported.";
+    throw std::invalid_argument(error.ToStdString());
+  }
+
   options_.clear();
 
   if (yaml_["name"]) {
     name_ = yaml_["name"].as<std::string>();
+  }
+
+  if (yaml_["description"]) {
+    description_ = yaml_["description"].as<std::string>();
   }
 
   if (yaml_["game"]) {

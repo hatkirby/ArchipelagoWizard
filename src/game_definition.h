@@ -108,6 +108,8 @@ class GameDefinitions {
  public:
   GameDefinitions();
 
+  bool HasGame(const std::string& game) const { return games_.count(game); }
+
   const Game& GetGame(const std::string& game) const { return games_.at(game); }
 
   const std::set<std::string>& GetAllGames() const { return all_games_; }

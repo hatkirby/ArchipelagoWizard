@@ -27,12 +27,18 @@ WizardEditor::WizardEditor(wxWindow* parent,
 
   game_box_->Bind(wxEVT_CHOICE, &WizardEditor::OnChangeGame, this);
 
+  description_box_ = new wxTextCtrl(this, wxID_ANY);
+  description_box_->Bind(wxEVT_TEXT, &WizardEditor::OnChangeDescription, this);
+
   wxFlexGridSizer* form_sizer = new wxFlexGridSizer(2, 10, 10);
   form_sizer->AddGrowableCol(1);
 
   form_sizer->Add(new wxStaticText(this, -1, "Name:"),
                   wxSizerFlags().Align(wxALIGN_TOP | wxALIGN_LEFT));
   form_sizer->Add(name_box_, wxSizerFlags().Expand());
+  form_sizer->Add(new wxStaticText(this, -1, "Description:"),
+                  wxSizerFlags().Align(wxALIGN_TOP | wxALIGN_LEFT));
+  form_sizer->Add(description_box_, wxSizerFlags().Expand());
   form_sizer->Add(new wxStaticText(this, -1, "Game:"),
                   wxSizerFlags().Align(wxALIGN_TOP | wxALIGN_LEFT));
   form_sizer->Add(game_box_, wxSizerFlags().Expand());
@@ -49,20 +55,21 @@ WizardEditor::WizardEditor(wxWindow* parent,
 void WizardEditor::LoadWorld(World* world) {
   world_ = world;
 
-  name_box_->ChangeValue(world_->GetName());
-
-  if (world_->HasGame()) {
-    game_box_->SetSelection(game_box_->FindString(world_->GetGame()));
-  } else {
-    game_box_->SetSelection(0);
-  }
-
-  Rebuild();
+  Reload();
 }
 
 void WizardEditor::Reload() {
-  Populate();
-  Layout();
+  std::optional<std::string> next_game;
+  if (world_ && world_->HasGame()) {
+    next_game = world_->GetGame();
+  }
+
+  if (cur_game_ != next_game) {
+    Rebuild();
+  } else {
+    Populate();
+    Layout();
+  }
 }
 
 void WizardEditor::Rebuild() {
@@ -126,10 +133,18 @@ void WizardEditor::Rebuild() {
 }
 
 void WizardEditor::Populate() {
-  if (world_ && !world_->HasGame()) return;
+  if (world_ && world_->HasGame()) {
+    name_box_->ChangeValue(world_->GetName());
+    description_box_->ChangeValue(world_->GetDescription());
+    game_box_->SetSelection(game_box_->FindString(world_->GetGame()));
 
-  for (FormOption& form_option : form_options_) {
-    form_option.PopulateFromWorld();
+    for (FormOption& form_option : form_options_) {
+      form_option.PopulateFromWorld();
+    }
+  } else {
+    name_box_->ChangeValue("");
+    description_box_->ChangeValue("");
+    game_box_->SetSelection(0);
   }
 }
 
@@ -146,6 +161,10 @@ void WizardEditor::FixSize() {
 
 void WizardEditor::OnChangeName(wxCommandEvent& event) {
   world_->SetName(name_box_->GetValue().ToStdString());
+}
+
+void WizardEditor::OnChangeDescription(wxCommandEvent& event) {
+  world_->SetDescription(description_box_->GetValue().ToStdString());
 }
 
 void WizardEditor::OnChangeGame(wxCommandEvent& event) {

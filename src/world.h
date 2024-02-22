@@ -43,6 +43,10 @@ class World {
 
   void UnsetGame();
 
+  const std::string& GetDescription() const { return description_; }
+
+  void SetDescription(const std::string& v);
+
   bool HasOption(const std::string& option_name) const;
 
   const OptionValue& GetOption(const std::string& option_name) const;
@@ -74,6 +78,7 @@ class World {
 
   std::string name_;
   std::optional<std::string> game_;
+  std::string description_;
   std::map<std::string, OptionValue> options_;
 
   std::optional<std::string> filename_;
