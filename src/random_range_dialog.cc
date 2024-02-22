@@ -425,6 +425,35 @@ RandomRangeDialog::RandomRangeDialog(const OptionDefinition* option_definition,
 
   Fit();
   CentreOnParent();
+
+  Bind(wxEVT_BUTTON, &RandomRangeDialog::OnOK, this, wxID_OK);
+}
+
+void RandomRangeDialog::OnOK(wxCommandEvent& event) {
+  if (modes_box_->GetSelection() == 1 && enable_range_subset_->GetValue() &&
+      subset_min_->GetValue() >= subset_max_->GetValue()) {
+    wxMessageBox(
+        "Range subset minimum must be strictly less than the maximum.");
+    return;
+  }
+
+  if (modes_box_->GetSelection() == 2) {
+    int num_nonzero = 0;
+    for (const auto& [rrd_value, weight] : weights_) {
+      if (weight.weight > 0) {
+        num_nonzero++;
+      }
+    }
+
+    if (num_nonzero < 2) {
+      wxMessageBox(
+          "There must be at least two values with a non-zero weight to use "
+          "weighted randomization.");
+      return;
+    }
+  }
+
+  EndModal(wxID_OK);
 }
 
 void RandomRangeDialog::OnModeChanged(wxCommandEvent& event) {
