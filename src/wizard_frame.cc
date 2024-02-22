@@ -323,17 +323,19 @@ void WizardFrame::UpdateWorldDisplay(World* world, wxTreeItemId tree_item_id) {
 }
 
 void WizardFrame::ShowMessage(const wxString& header, const wxString& msg) {
-  int width = message_pane_->GetClientSize().GetWidth();
-  message_header_->SetLabel(header);
-  message_header_->Wrap(width);
+  for (int i = 0; i < 2; i++) {
+    int width = message_pane_->GetClientSize().GetWidth();
+    message_header_->SetLabel(header);
+    message_header_->Wrap(width);
 
-  message_window_->SetLabel(msg);
-  message_window_->Wrap(width);
+    message_window_->SetLabel(msg);
+    message_window_->Wrap(width);
 
-  message_pane_->SetSizer(message_pane_->GetSizer());
-  message_pane_->Layout();
-  message_pane_->FitInside();
-  message_pane_->Scroll(0, 0);
+    message_pane_->SetSizer(message_pane_->GetSizer());
+    message_pane_->Layout();
+    message_pane_->FitInside();
+    message_pane_->Scroll(0, 0);
+  }
 }
 
 bool WizardFrame::FlushSelectedWorld(bool ask_discard) {
