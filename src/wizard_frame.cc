@@ -1,5 +1,6 @@
 #include "wizard_frame.h"
 
+#include <wx/aboutdlg.h>
 #include <wx/listctrl.h>
 #include <wx/splitter.h>
 
@@ -234,12 +235,16 @@ void WizardFrame::OnClose(wxCloseEvent& event) {
 }
 
 void WizardFrame::OnAbout(wxCommandEvent& event) {
-  std::ostringstream message_text;
-  message_text << "Archipelago Generation Wizard " << kWizardVersion
-               << " by hatkirby";
+  std::ostringstream version_string;
+  version_string << kWizardVersion;
 
-  wxMessageBox(message_text.str(), "About ArchipelagoWizard",
-               wxOK | wxICON_INFORMATION);
+  wxAboutDialogInfo about_info;
+  about_info.SetName("ArchipelagoWizard");
+  about_info.SetVersion(version_string.str());
+  about_info.SetDescription("GUI tool for generating Archipelago worlds.");
+  about_info.AddDeveloper("hatkirby");
+
+  wxAboutBox(about_info);
 }
 
 void WizardFrame::OnWorldSelecting(wxTreeEvent& event) {
