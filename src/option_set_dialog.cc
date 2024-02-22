@@ -40,16 +40,9 @@ OptionSetDialog::OptionSetDialog(const Game* game,
       lists_sizer->GetStaticBox(), wxID_ANY,
       &GetOptionSetElements(*game_, option_definition_->name));
 
-  wxButton* add_btn =
-      new wxButton(lists_sizer->GetStaticBox(), wxID_ANY, "Add");
-  add_btn->Bind(wxEVT_BUTTON, &OptionSetDialog::OnAddClicked, this);
+  item_picker_->Bind(EVT_PICK_ITEM, &OptionSetDialog::OnItemPicked, this);
 
-  wxBoxSizer* left_sizer = new wxBoxSizer(wxVERTICAL);
-  left_sizer->Add(item_picker_, wxSizerFlags().Proportion(1).Expand());
-  left_sizer->AddSpacer(10);
-  left_sizer->Add(add_btn, wxSizerFlags().Center());
-
-  lists_sizer->Add(left_sizer,
+  lists_sizer->Add(item_picker_,
                    wxSizerFlags().DoubleBorder().Proportion(1).Expand());
 
   // Set up the chosen list
@@ -117,21 +110,16 @@ OptionValue OptionSetDialog::GetOptionValue() const {
   return option_value;
 }
 
-void OptionSetDialog::OnAddClicked(wxCommandEvent& event) {
-  std::optional<std::string> selected_text = item_picker_->GetSelected();
-  if (!selected_text) {
-    return;
-  }
-
-  if (picked_.count(*selected_text)) {
+void OptionSetDialog::OnItemPicked(wxCommandEvent& event) {
+  if (picked_.count(event.GetString().ToStdString())) {
     return;
   }
 
   wxVector<wxVariant> data;
-  data.push_back(wxVariant(*selected_text));
+  data.push_back(wxVariant(event.GetString()));
   chosen_list_->AppendItem(data);
 
-  picked_.insert(*selected_text);
+  picked_.insert(event.GetString().ToStdString());
 }
 
 void OptionSetDialog::OnRemoveClicked(wxCommandEvent& event) {
