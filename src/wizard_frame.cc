@@ -3,6 +3,7 @@
 #include <wx/listctrl.h>
 #include <wx/splitter.h>
 
+#include <filesystem>
 #include <sstream>
 
 #include "version.h"
@@ -289,7 +290,7 @@ void WizardFrame::SyncWorldIndices() {
 }
 
 void WizardFrame::UpdateWorldDisplay(World* world, wxTreeItemId tree_item_id) {
-  std::ostringstream world_display;
+  wxString world_display;
   if (world->IsDirty()) {
     world_display << "*";
   }
@@ -301,10 +302,19 @@ void WizardFrame::UpdateWorldDisplay(World* world, wxTreeItemId tree_item_id) {
   }
 
   if (world->HasGame()) {
-    world_display << " [" << world->GetGame() << "]";
+    world_display << " [";
+    world_display << world->GetGame();
+    world_display << "]";
   }
 
-  world_list_->SetItemText(tree_item_id, world_display.str());
+  if (world->HasFilename()) {
+    std::filesystem::path filepath(world->GetFilename());
+    world_display << " (";
+    world_display << filepath.filename().c_str();
+    world_display << ")";
+  }
+
+  world_list_->SetItemText(tree_item_id, world_display);
 }
 
 void WizardFrame::ShowMessage(const wxString& header, const wxString& msg) {

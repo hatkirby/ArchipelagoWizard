@@ -189,8 +189,7 @@ GameDefinitions::GameDefinitions() {
         option.type = kSetOption;
         option.set_type = kLocationSet;
         option.display_name = "Priority Locations";
-        option.description =
-            "Force these locations to have an important item.";
+        option.description = "Force these locations to have an important item.";
       } else if (option.name == "item_links") {
         option.type = kUNKNOWN_OPTION_TYPE;
         option.display_name = "Item Links";
