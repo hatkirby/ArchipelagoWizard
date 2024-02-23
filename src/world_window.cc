@@ -11,12 +11,14 @@ WorldWindow::WorldWindow(wxWindow* parent,
 
   wizard_editor_ = new WizardEditor(this, game_definitions_);
   yaml_editor_ = new YamlEditor(this);
-
-  AddPage(wizard_editor_, "Wizard", true);
-  AddPage(yaml_editor_, "YAML", false);
 }
 
 void WorldWindow::LoadWorld(World* world) {
+  if (!world_) {
+    AddPage(wizard_editor_, "Wizard", true);
+    AddPage(yaml_editor_, "YAML", false);
+  }
+
   world_ = world;
 
   wizard_editor_->LoadWorld(world_);
@@ -32,7 +34,20 @@ void WorldWindow::SaveWorld() {
   }
 }
 
+void WorldWindow::UnloadWorld() {
+  if (world_) {
+    world_ = nullptr;
+
+    RemovePage(1);
+    RemovePage(0);
+  }
+}
+
 void WorldWindow::OnPageChanging(wxBookCtrlEvent& event) {
+  if (!world_) {
+    return;
+  }
+
   if (event.GetOldSelection() == 1) {
     try {
       yaml_editor_->SaveWorld();
@@ -50,6 +65,10 @@ void WorldWindow::OnPageChanging(wxBookCtrlEvent& event) {
 }
 
 void WorldWindow::OnPageChanged(wxBookCtrlEvent& event) {
+  if (!world_) {
+    return;
+  }
+
   if (GetSelection() == 0) {
     wizard_editor_->Reload();
   } else if (GetSelection() == 1) {

@@ -55,24 +55,26 @@ WizardEditor::WizardEditor(wxWindow* parent,
 void WizardEditor::LoadWorld(World* world) {
   world_ = world;
 
-  Reload();
+  Rebuild();
 }
 
-void WizardEditor::Reload() {
+void WizardEditor::Reload() { Rebuild(); }
+
+void WizardEditor::Rebuild() {
   std::optional<std::string> next_game;
   if (world_ && world_->HasGame()) {
     next_game = world_->GetGame();
   }
 
-  if (cur_game_ != next_game) {
-    Rebuild();
-  } else {
+  if (!first_time_ && cur_game_ == next_game) {
     Populate();
     Layout();
-  }
-}
 
-void WizardEditor::Rebuild() {
+    return;
+  }
+
+  first_time_ = false;
+
   if (other_options_ != nullptr) {
     other_options_->Destroy();
     other_options_ = nullptr;
@@ -125,25 +127,30 @@ void WizardEditor::Rebuild() {
       top_sizer_->Add(common_options_pane_,
                       wxSizerFlags().DoubleBorder().Proportion(0).Expand());
     }
-
-    Populate();
   }
 
+  Populate();
   FixSize();
+
+  cur_game_ = next_game;
 }
 
 void WizardEditor::Populate() {
-  if (world_ && world_->HasGame()) {
+  if (world_) {
     name_box_->ChangeValue(world_->GetName());
     description_box_->ChangeValue(world_->GetDescription());
+  } else {
+    name_box_->ChangeValue("");
+    description_box_->ChangeValue("");
+  }
+
+  if (world_ && world_->HasGame()) {
     game_box_->SetSelection(game_box_->FindString(world_->GetGame()));
 
     for (FormOption& form_option : form_options_) {
       form_option.PopulateFromWorld();
     }
   } else {
-    name_box_->ChangeValue("");
-    description_box_->ChangeValue("");
     game_box_->SetSelection(0);
   }
 }

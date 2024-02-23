@@ -89,6 +89,7 @@ class WizardEditor : public wxScrolledWindow {
 
   World* world_ = nullptr;
   std::optional<std::string> cur_game_;
+  bool first_time_ = true;
 
   wxTextCtrl* name_box_;
   wxTextCtrl* description_box_;

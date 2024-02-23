@@ -24,6 +24,8 @@ class WorldWindow : public wxNotebook {
 
   void SaveWorld();
 
+  void UnloadWorld();
+
   void SetMessageCallback(
       std::function<void(const wxString&, const wxString&)> callback);
 
@@ -36,7 +38,7 @@ class WorldWindow : public wxNotebook {
   WizardEditor* wizard_editor_;
   YamlEditor* yaml_editor_;
 
-  World* world_;
+  World* world_ = nullptr;
 };
 
 #endif /* end of include guard: WORLD_WINDOW_H_5F182828 */

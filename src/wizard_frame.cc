@@ -20,9 +20,9 @@ enum WizardFrameIds {
 
 class WorldEntryData : public wxTreeItemData {
  public:
-  explicit WorldEntryData(int v) : index(v) {}
+  explicit WorldEntryData(World* w) : world(w) {}
 
-  int index = -1;
+  World* world;
 };
 
 WizardFrame::WizardFrame()
@@ -99,7 +99,6 @@ WizardFrame::WizardFrame()
 
   splitter_window_->SplitVertically(left_pane, world_window_, 250);
 
-  world_window_->Hide();
   world_window_->SetMessageCallback(
       [this](const wxString& header, const wxString& msg) {
         ShowMessage(header, msg);
@@ -143,7 +142,8 @@ void WizardFrame::OnLoadWorld(wxCommandEvent& event) {
 }
 
 void WizardFrame::OnSaveWorld(wxCommandEvent& event) {
-  if (!world_list_->GetSelection().IsOk()) {
+  if (!world_list_->GetSelection().IsOk() ||
+      world_list_->GetRootItem() == world_list_->GetSelection()) {
     return;
   }
 
@@ -153,12 +153,12 @@ void WizardFrame::OnSaveWorld(wxCommandEvent& event) {
 
   const WorldEntryData* data = dynamic_cast<WorldEntryData*>(
       world_list_->GetItemData(world_list_->GetSelection()));
-  World& world = *worlds_.at(data->index);
-  AttemptSaveWorld(world);
+  AttemptSaveWorld(*data->world);
 }
 
 void WizardFrame::OnSaveAsWorld(wxCommandEvent& event) {
-  if (!world_list_->GetSelection().IsOk()) {
+  if (!world_list_->GetSelection().IsOk() ||
+      world_list_->GetRootItem() == world_list_->GetSelection()) {
     return;
   }
 
@@ -168,12 +168,12 @@ void WizardFrame::OnSaveAsWorld(wxCommandEvent& event) {
 
   const WorldEntryData* data = dynamic_cast<WorldEntryData*>(
       world_list_->GetItemData(world_list_->GetSelection()));
-  World& world = *worlds_.at(data->index);
-  AttemptSaveWorld(world, /*force_dialog=*/true);
+  AttemptSaveWorld(*data->world, /*force_dialog=*/true);
 }
 
 void WizardFrame::OnCloseWorld(wxCommandEvent& event) {
-  if (world_list_->GetRootItem() == world_list_->GetSelection()) {
+  if (!world_list_->GetSelection().IsOk() ||
+      world_list_->GetRootItem() == world_list_->GetSelection()) {
     return;
   }
 
@@ -183,7 +183,7 @@ void WizardFrame::OnCloseWorld(wxCommandEvent& event) {
 
   const WorldEntryData* data = dynamic_cast<WorldEntryData*>(
       world_list_->GetItemData(world_list_->GetSelection()));
-  World& world = *worlds_.at(data->index);
+  World& world = *data->world;
   if (world.IsDirty()) {
     wxString message_text;
     message_text << "\"";
@@ -211,10 +211,17 @@ void WizardFrame::OnCloseWorld(wxCommandEvent& event) {
     }
   }
 
-  worlds_.erase(std::next(worlds_.begin(), data->index));
+  // Deleting the entry from the tree automatically changes the selection, which
+  // runs the handlers. Thus we should not actually delete the old world until
+  // afterwards.
   world_list_->Delete(world_list_->GetSelection());
 
-  SyncWorldIndices();
+  auto it = std::find_if(
+      worlds_.begin(), worlds_.end(),
+      [&world](const std::unique_ptr<World>& w) { return w.get() == &world; });
+  if (it != worlds_.end()) {
+    worlds_.erase(it);
+  }
 }
 
 void WizardFrame::OnExit(wxCommandEvent& event) {
@@ -254,13 +261,13 @@ void WizardFrame::OnWorldSelecting(wxTreeEvent& event) {
 }
 
 void WizardFrame::OnWorldSelected(wxTreeEvent& event) {
-  if (event.GetItem() == world_list_->GetRootItem()) {
-    world_window_->Hide();
+  if (!event.GetItem().IsOk() ||
+      event.GetItem() == world_list_->GetRootItem()) {
+    world_window_->UnloadWorld();
   } else {
     const WorldEntryData* data = dynamic_cast<WorldEntryData*>(
         world_list_->GetItemData(event.GetItem()));
-    world_window_->LoadWorld(worlds_.at(data->index).get());
-    world_window_->Show();
+    world_window_->LoadWorld(data->world);
   }
 }
 
@@ -272,26 +279,13 @@ void WizardFrame::InitializeWorld(std::unique_ptr<World> world) {
 
   wxTreeItemId root_id = world_list_->GetRootItem();
   wxTreeItemId new_id = world_list_->AppendItem(root_id, "New World", -1, -1,
-                                                new WorldEntryData(index));
+                                                new WorldEntryData(new_world));
 
   new_world->SetMetaUpdateCallback(
       [this, new_world, new_id] { UpdateWorldDisplay(new_world, new_id); });
 
   UpdateWorldDisplay(new_world, new_id);
   world_list_->SelectItem(new_id);
-}
-
-void WizardFrame::SyncWorldIndices() {
-  wxTreeItemId root_id = world_list_->GetRootItem();
-  wxTreeItemIdValue cookie;
-  int index = 0;
-  for (wxTreeItemId tree_item_id = world_list_->GetFirstChild(root_id, cookie);
-       tree_item_id.IsOk();
-       tree_item_id = world_list_->GetNextChild(root_id, cookie)) {
-    dynamic_cast<WorldEntryData*>(world_list_->GetItemData(tree_item_id))
-        ->index = index;
-    index++;
-  }
 }
 
 void WizardFrame::UpdateWorldDisplay(World* world, wxTreeItemId tree_item_id) {
@@ -339,7 +333,8 @@ void WizardFrame::ShowMessage(const wxString& header, const wxString& msg) {
 }
 
 bool WizardFrame::FlushSelectedWorld(bool ask_discard) {
-  if (world_list_->GetRootItem() == world_list_->GetSelection()) {
+  if (!world_list_->GetSelection().IsOk() ||
+      world_list_->GetRootItem() == world_list_->GetSelection()) {
     return true;
   }
 
