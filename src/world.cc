@@ -109,7 +109,7 @@ void World::FromYaml(const std::string& text) {
 
   try {
     PopulateFromYaml();
-  } catch (const std::exception& ex) {
+  } catch (const std::exception&) {
     yaml_ = old_node;
 
     throw;

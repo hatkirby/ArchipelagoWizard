@@ -571,7 +571,7 @@ void FormOption::SaveToWorld() {
     new_value.int_value = slider_->GetValue();
   } else if (game_option.type == kSetOption) {
     if (list_box_ != nullptr) {
-      for (int i = 0; i < list_box_->GetCount(); i++) {
+      for (size_t i = 0; i < list_box_->GetCount(); i++) {
         new_value.set_values.push_back(list_box_->IsChecked(i));
       }
     }
