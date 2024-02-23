@@ -244,6 +244,11 @@ void World::UnsetOption(const std::string& option_name) {
   }
 }
 
+void World::ClearOptions() {
+  dirty_ = true;
+  options_.clear();
+}
+
 void World::PopulateFromYaml() {
   if (yaml_["game"] &&
       !game_definitions_->HasGame(yaml_["game"].as<std::string>())) {

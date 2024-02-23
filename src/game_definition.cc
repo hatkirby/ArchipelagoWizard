@@ -201,12 +201,60 @@ GameDefinitions::GameDefinitions() {
       options.push_back(std::move(option));
     }
 
+    std::map<std::string, const OptionDefinition*> options_by_name;
+    for (const OptionDefinition& od : options) {
+      options_by_name[od.name] = &od;
+    }
+
+    std::map<std::string, std::map<std::string, OptionValue>> presets;
+    for (const auto& [preset_name, preset_options] :
+         game_data["presets"].items()) {
+      std::map<std::string, OptionValue> values;
+
+      for (const auto& [option_name, option_value] : preset_options.items()) {
+        const OptionDefinition& option_definition =
+            *options_by_name[option_name];
+
+        OptionValue ov;
+        if (option_value.is_string() && option_value == "random") {
+          ov.random = true;
+        } else if (option_definition.type == kRangeOption) {
+          if (option_value.is_string() &&
+              option_definition.value_names.HasValue(option_value)) {
+            ov.int_value =
+                option_definition.value_names.GetByValue(option_value);
+          } else if (option_value.is_number()) {
+            ov.int_value = option_value;
+          }
+        } else if (option_definition.type == kSelectOption) {
+          if (option_value.is_string() &&
+              option_definition.choices.HasKey(option_value)) {
+            ov.string_value = option_value;
+          } else if (option_value.is_number() &&
+                     option_definition.choices.HasId(option_value)) {
+            ov.string_value =
+                option_definition.choices.GetKeyById(option_value);
+          } else if (option_value.is_boolean()) {
+            if (option_value) {
+              ov.string_value = "true";
+            } else {
+              ov.string_value = "false";
+            }
+          }
+        }
+
+        values[option_name] = std::move(ov);
+      }
+
+      presets[preset_name] = std::move(values);
+    }
+
     std::cout << "Read " << options.size() << " options for " << game_name
               << std::endl;
     games_.emplace(std::piecewise_construct, std::forward_as_tuple(game_name),
-                   std::forward_as_tuple(game_name, std::move(options),
-                                         std::move(game_items),
-                                         std::move(game_locations)));
+                   std::forward_as_tuple(
+                       game_name, std::move(options), std::move(game_items),
+                       std::move(game_locations), std::move(presets)));
     all_games_.insert(game_name);
   }
 }

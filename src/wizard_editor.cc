@@ -31,6 +31,13 @@ WizardEditor::WizardEditor(wxWindow* parent,
   description_box_ = new wxTextCtrl(this, wxID_ANY);
   description_box_->Bind(wxEVT_TEXT, &WizardEditor::OnChangeDescription, this);
 
+  preset_label_ = new wxStaticText(this, wxID_ANY, "Preset:");
+  preset_label_->Hide();
+
+  preset_box_ = new wxChoice(this, wxID_ANY);
+  preset_box_->Bind(wxEVT_CHOICE, &WizardEditor::OnChangePreset, this);
+  preset_box_->Hide();
+
   wxFlexGridSizer* form_sizer = new wxFlexGridSizer(2, 10, 10);
   form_sizer->AddGrowableCol(1);
 
@@ -43,6 +50,9 @@ WizardEditor::WizardEditor(wxWindow* parent,
   form_sizer->Add(new wxStaticText(this, -1, "Game:"),
                   wxSizerFlags().Align(wxALIGN_TOP | wxALIGN_LEFT));
   form_sizer->Add(game_box_, wxSizerFlags().Expand());
+  form_sizer->Add(preset_label_,
+                  wxSizerFlags().Align(wxALIGN_TOP | wxALIGN_LEFT));
+  form_sizer->Add(preset_box_, wxSizerFlags().Expand());
 
   top_sizer_ = new wxBoxSizer(wxVERTICAL);
   top_sizer_->Add(form_sizer, wxSizerFlags().DoubleBorder().Expand());
@@ -128,6 +138,24 @@ void WizardEditor::Rebuild() {
       top_sizer_->Add(common_options_pane_,
                       wxSizerFlags().DoubleBorder().Proportion(0).Expand());
     }
+
+    if (!game.GetPresets().empty()) {
+      preset_box_->Clear();
+      preset_box_->Append("");
+
+      for (const auto& [preset_name, preset_options] : game.GetPresets()) {
+        preset_box_->Append(preset_name);
+      }
+
+      preset_label_->Show();
+      preset_box_->Show();
+    } else {
+      preset_label_->Hide();
+      preset_box_->Hide();
+    }
+  } else {
+    preset_label_->Hide();
+    preset_box_->Hide();
   }
 
   Populate();
@@ -193,6 +221,34 @@ void WizardEditor::OnChangeGame(wxCommandEvent& event) {
   }
 
   Rebuild();
+}
+
+void WizardEditor::OnChangePreset(wxCommandEvent& event) {
+  if (preset_box_->GetSelection() == 0) {
+    return;
+  }
+
+  if (world_->HasSetOptions()) {
+    if (wxMessageBox("This World has options set on it. Using a preset will "
+                     "clear these options. Are you sure you want to proceed?",
+                     "Confirm", wxYES_NO, this) == wxNO) {
+      preset_box_->SetSelection(0);
+      return;
+    }
+  }
+
+  world_->ClearOptions();
+
+  const Game& game = game_definitions_->GetGame(world_->GetGame());
+  const std::map<std::string, OptionValue>& preset = game.GetPresets().at(
+      preset_box_->GetString(preset_box_->GetSelection()).ToStdString());
+
+  for (const auto& [option_name, option_value] : preset) {
+    world_->SetOption(option_name, option_value);
+  }
+
+  Populate();
+  Layout();
 }
 
 FormOption::FormOption(WizardEditor* parent, wxWindow* container,

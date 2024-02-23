@@ -83,6 +83,7 @@ class WizardEditor : public wxScrolledWindow {
   void OnChangeName(wxCommandEvent& event);
   void OnChangeDescription(wxCommandEvent& event);
   void OnChangeGame(wxCommandEvent& event);
+  void OnChangePreset(wxCommandEvent& event);
 
   const GameDefinitions* game_definitions_;
 
@@ -93,6 +94,8 @@ class WizardEditor : public wxScrolledWindow {
   wxTextCtrl* name_box_;
   wxTextCtrl* description_box_;
   wxChoice* game_box_;
+  wxStaticText* preset_label_;
+  wxChoice* preset_box_;
   wxPanel* other_options_ = nullptr;
   wxCollapsiblePane* common_options_pane_ = nullptr;
   wxBoxSizer* top_sizer_;

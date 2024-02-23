@@ -74,11 +74,13 @@ struct OptionDefinition {
 class Game {
  public:
   Game(std::string name, std::vector<OptionDefinition> options,
-       DoubleMap<std::string> items, DoubleMap<std::string> locations)
+       DoubleMap<std::string> items, DoubleMap<std::string> locations,
+       std::map<std::string, std::map<std::string, OptionValue>> presets)
       : name_(std::move(name)),
         options_(std::move(options)),
         items_(std::move(items)),
-        locations_(std::move(locations)) {
+        locations_(std::move(locations)),
+        presets_(std::move(presets)) {
     for (const OptionDefinition& option : options_) {
       options_by_name_[option.name] = option;
     }
@@ -96,12 +98,18 @@ class Game {
 
   const DoubleMap<std::string>& GetLocations() const { return locations_; }
 
+  const std::map<std::string, std::map<std::string, OptionValue>>& GetPresets()
+      const {
+    return presets_;
+  }
+
  private:
   std::string name_;
   std::vector<OptionDefinition> options_;
   std::map<std::string, OptionDefinition> options_by_name_;
   DoubleMap<std::string> items_;
   DoubleMap<std::string> locations_;
+  std::map<std::string, std::map<std::string, OptionValue>> presets_;
 };
 
 class GameDefinitions {
