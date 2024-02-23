@@ -11,6 +11,12 @@ WorldWindow::WorldWindow(wxWindow* parent,
 
   wizard_editor_ = new WizardEditor(this, game_definitions_);
   yaml_editor_ = new YamlEditor(this);
+
+  AddPage(wizard_editor_, "Wizard", true);
+  AddPage(yaml_editor_, "YAML", false);
+
+  RemovePage(1);
+  RemovePage(0);
 }
 
 void WorldWindow::LoadWorld(World* world) {
