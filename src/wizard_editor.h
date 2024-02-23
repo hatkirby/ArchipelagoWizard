@@ -14,6 +14,7 @@
 #include <functional>
 #include <list>
 #include <map>
+#include <optional>
 
 #include "game_definition.h"
 #include "world.h"
@@ -81,13 +82,16 @@ class WizardEditor : public wxScrolledWindow {
   void FixSize();
 
   void OnChangeName(wxCommandEvent& event);
+  void OnChangeDescription(wxCommandEvent& event);
   void OnChangeGame(wxCommandEvent& event);
 
   const GameDefinitions* game_definitions_;
 
   World* world_ = nullptr;
+  std::optional<std::string> cur_game_;
 
   wxTextCtrl* name_box_;
+  wxTextCtrl* description_box_;
   wxChoice* game_box_;
   wxPanel* other_options_ = nullptr;
   wxCollapsiblePane* common_options_pane_ = nullptr;

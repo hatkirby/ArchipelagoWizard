@@ -24,7 +24,7 @@ class ItemDictDialog : public wxDialog {
   OptionValue GetOptionValue() const;
 
  private:
-  void OnAddClicked(wxCommandEvent& event);
+  void OnItemPicked(wxCommandEvent& event);
   void OnDeleteClicked(wxCommandEvent& event);
 
   void AddRow(const std::string& value, wxWindow* parent, wxSizer* sizer,

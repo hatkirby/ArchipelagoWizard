@@ -40,16 +40,10 @@ ItemDictDialog::ItemDictDialog(const Game* game, const std::string& option_name,
       lists_panel, wxID_ANY,
       &GetOptionSetElements(*game_, option_definition_->name));
 
-  wxButton* add_btn = new wxButton(lists_panel, wxID_ANY, "Add");
-  add_btn->Bind(wxEVT_BUTTON, &ItemDictDialog::OnAddClicked, this);
+  item_picker_->Bind(EVT_PICK_ITEM, &ItemDictDialog::OnItemPicked, this);
 
-  wxBoxSizer* left_sizer = new wxBoxSizer(wxVERTICAL);
-  left_sizer->Add(item_picker_, wxSizerFlags().Proportion(1).Expand());
-  left_sizer->AddSpacer(10);
-  left_sizer->Add(add_btn, wxSizerFlags().Center());
-
-  lists_sizer->Add(left_sizer,
-                   wxSizerFlags().DoubleBorder().Proportion(1));
+  lists_sizer->Add(item_picker_,
+                   wxSizerFlags().DoubleBorder().Proportion(1).Expand());
 
   // Set up the chosen list
   value_panel_ = new wxScrolledWindow(lists_panel, wxID_ANY);
@@ -102,17 +96,12 @@ OptionValue ItemDictDialog::GetOptionValue() const {
   return option_value;
 }
 
-void ItemDictDialog::OnAddClicked(wxCommandEvent& event) {
-  std::optional<std::string> selected_text = item_picker_->GetSelected();
-  if (!selected_text) {
+void ItemDictDialog::OnItemPicked(wxCommandEvent& event) {
+  if (values_.count(event.GetString().ToStdString())) {
     return;
   }
 
-  if (values_.count(*selected_text)) {
-    return;
-  }
-
-  AddRow(*selected_text, value_panel_, value_sizer_, 1);
+  AddRow(event.GetString().ToStdString(), value_panel_, value_sizer_, 1);
 
   value_panel_->Layout();
   value_panel_->FitInside();

@@ -3,11 +3,12 @@
 #include <whereami.h>
 
 #include <sstream>
+#include <vector>
 
-OptionValue GetRandomOptionValueFromString(std::string descriptor) {
+OptionValue GetRandomOptionValueFromString(wxString descriptor) {
   OptionValue result;
 
-  auto parts = split<std::vector<std::string>>(descriptor, "-");
+  auto parts = split<std::vector<wxString>>(descriptor, "-");
   int it = 0;
 
   if (parts[it] == "random") {
@@ -72,8 +73,27 @@ OptionValue GetRandomOptionValueFromString(std::string descriptor) {
       return result;
     }
 
-    int min = std::stoi(parts[it]);
-    int max = std::stoi(parts[it + 1]);
+    long min = 0;
+    if (!parts[it].ToLong(&min)) {
+      wxString error;
+      error << "Ranged random specifier \"";
+      error << descriptor;
+      error << "\" min value is not numeric.";
+
+      result.error = error.ToStdString();
+      return result;
+    }
+
+    long max = 0;
+    if (!parts[it + 1].ToLong(&max)) {
+      wxString error;
+      error << "Ranged random specifier \"";
+      error << descriptor;
+      error << "\" max value is not numeric.";
+
+      result.error = error.ToStdString();
+      return result;
+    }
 
     result.range_subset = std::tuple<int, int>(min, max);
 
@@ -147,4 +167,13 @@ const std::filesystem::path& GetExecutableDirectory() {
 
 std::string GetAbsolutePath(std::string_view path) {
   return (GetExecutableDirectory() / path).string();
+}
+
+wxString ConvertToTitleCase(wxString input) {
+  auto words = split<std::vector<wxString>>(input, " ");
+  for (wxString& word : words) {
+    word.MakeCapitalized();
+  }
+
+  return implode(words, " ");
 }

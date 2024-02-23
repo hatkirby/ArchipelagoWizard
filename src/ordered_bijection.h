@@ -52,6 +52,8 @@ class OrderedBijection {
     return std::get<1>(ordering_.at(id));
   }
 
+  bool HasId(size_t id) const { return id >= 0 && id < ordering_.size(); }
+
  private:
   std::vector<std::tuple<K, V>> ordering_;
   std::map<K, V> forward_;

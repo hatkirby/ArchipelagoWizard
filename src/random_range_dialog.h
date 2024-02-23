@@ -36,6 +36,7 @@ class RandomRangeDialog : public wxDialog {
   OptionValue GetOptionValue() const;
 
  private:
+  void OnOK(wxCommandEvent& event);
   void OnModeChanged(wxCommandEvent& event);
   void OnDeleteClicked(wxCommandEvent& event);
 

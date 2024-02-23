@@ -24,7 +24,7 @@ class OptionSetDialog : public wxDialog {
   OptionValue GetOptionValue() const;
 
  private:
-  void OnAddClicked(wxCommandEvent& event);
+  void OnItemPicked(wxCommandEvent& event);
   void OnRemoveClicked(wxCommandEvent& event);
 
   const Game* game_;

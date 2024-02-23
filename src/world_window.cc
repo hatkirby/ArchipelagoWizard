@@ -38,11 +38,11 @@ void WorldWindow::OnPageChanging(wxBookCtrlEvent& event) {
       yaml_editor_->SaveWorld();
     } catch (const std::exception& ex) {
       wxString msg;
-      msg << "Could not save world.\n\n";
+      msg << "Could not process YAML.\n\n";
       msg << ex.what();
       msg << "\n\nWould you like to discard your changes?";
 
-      if (wxMessageBox(msg, "Failure to save world", wxYES_NO) == wxNO) {
+      if (wxMessageBox(msg, "Invalid YAML", wxYES_NO) == wxNO) {
         event.Veto();
       }
     }

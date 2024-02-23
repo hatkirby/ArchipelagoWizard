@@ -1,8 +1,10 @@
 #include "wizard_frame.h"
 
+#include <wx/aboutdlg.h>
 #include <wx/listctrl.h>
 #include <wx/splitter.h>
 
+#include <filesystem>
 #include <sstream>
 
 #include "version.h"
@@ -233,12 +235,16 @@ void WizardFrame::OnClose(wxCloseEvent& event) {
 }
 
 void WizardFrame::OnAbout(wxCommandEvent& event) {
-  std::ostringstream message_text;
-  message_text << "Archipelago Generation Wizard " << kWizardVersion
-               << " by hatkirby";
+  std::ostringstream version_string;
+  version_string << kWizardVersion;
 
-  wxMessageBox(message_text.str(), "About ArchipelagoWizard",
-               wxOK | wxICON_INFORMATION);
+  wxAboutDialogInfo about_info;
+  about_info.SetName("ArchipelagoWizard");
+  about_info.SetVersion(version_string.str());
+  about_info.SetDescription("GUI tool for generating Archipelago worlds.");
+  about_info.AddDeveloper("hatkirby");
+
+  wxAboutBox(about_info);
 }
 
 void WizardFrame::OnWorldSelecting(wxTreeEvent& event) {
@@ -289,7 +295,7 @@ void WizardFrame::SyncWorldIndices() {
 }
 
 void WizardFrame::UpdateWorldDisplay(World* world, wxTreeItemId tree_item_id) {
-  std::ostringstream world_display;
+  wxString world_display;
   if (world->IsDirty()) {
     world_display << "*";
   }
@@ -301,24 +307,35 @@ void WizardFrame::UpdateWorldDisplay(World* world, wxTreeItemId tree_item_id) {
   }
 
   if (world->HasGame()) {
-    world_display << " [" << world->GetGame() << "]";
+    world_display << " [";
+    world_display << world->GetGame();
+    world_display << "]";
   }
 
-  world_list_->SetItemText(tree_item_id, world_display.str());
+  if (world->HasFilename()) {
+    std::filesystem::path filepath(world->GetFilename());
+    world_display << " (";
+    world_display << filepath.filename().c_str();
+    world_display << ")";
+  }
+
+  world_list_->SetItemText(tree_item_id, world_display);
 }
 
 void WizardFrame::ShowMessage(const wxString& header, const wxString& msg) {
-  int width = message_pane_->GetClientSize().GetWidth();
-  message_header_->SetLabel(header);
-  message_header_->Wrap(width);
+  for (int i = 0; i < 2; i++) {
+    int width = message_pane_->GetClientSize().GetWidth();
+    message_header_->SetLabel(header);
+    message_header_->Wrap(width);
 
-  message_window_->SetLabel(msg);
-  message_window_->Wrap(width);
+    message_window_->SetLabel(msg);
+    message_window_->Wrap(width);
 
-  message_pane_->SetSizer(message_pane_->GetSizer());
-  message_pane_->Layout();
-  message_pane_->FitInside();
-  message_pane_->Scroll(0, 0);
+    message_pane_->SetSizer(message_pane_->GetSizer());
+    message_pane_->Layout();
+    message_pane_->FitInside();
+    message_pane_->Scroll(0, 0);
+  }
 }
 
 bool WizardFrame::FlushSelectedWorld(bool ask_discard) {

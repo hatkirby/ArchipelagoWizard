@@ -13,6 +13,8 @@
 
 #include "double_map.h"
 
+wxDECLARE_EVENT(EVT_PICK_ITEM, wxCommandEvent);
+
 class FilterableItemPicker : public wxPanel {
  public:
   FilterableItemPicker(wxWindow* parent, wxWindowID id,
@@ -24,6 +26,8 @@ class FilterableItemPicker : public wxPanel {
   void UpdateSourceList();
 
   void OnFilterEdited(wxCommandEvent& event);
+  void OnAddClicked(wxCommandEvent& event);
+  void OnDoubleClick(wxMouseEvent& event);
 
   const DoubleMap<std::string>* items_;
 
