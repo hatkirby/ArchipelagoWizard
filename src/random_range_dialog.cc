@@ -311,32 +311,37 @@ RandomRangeDialog::RandomRangeDialog(const OptionDefinition* option_definition,
   top_sizer->Add(CreateButtonSizer(wxOK | wxCANCEL), wxSizerFlags().Expand());
 
   // Set up the buttons to add rows to the weighted form.
-  add_regular_button_->Bind(
-      wxEVT_BUTTON, [this, weighted_box_sizer](wxCommandEvent&) {
-        RrdValue rrd_value;
-        rrd_value.type = chosen_random_type_;
+  add_regular_button_->Bind(wxEVT_BUTTON, [this, weighted_box_sizer](
+                                              wxCommandEvent&) {
+    RrdValue rrd_value;
+    rrd_value.type = chosen_random_type_;
 
-        if (enable_range_subset_->GetValue()) {
-          rrd_value.min = subset_min_->GetValue();
-          rrd_value.max = subset_max_->GetValue();
+    if (enable_range_subset_->GetValue()) {
+      rrd_value.min = subset_min_->GetValue();
+      rrd_value.max = subset_max_->GetValue();
 
-          if (rrd_value.min >= rrd_value.max) {
-            wxMessageBox(
-                "The range maximum must be greater than the range minimum.");
-            return;
-          }
-        }
+      if (rrd_value.min >= rrd_value.max) {
+        wxMessageBox(
+            "The range maximum must be greater than the range minimum.");
+        return;
+      }
 
-        if (weights_.count(rrd_value)) {
-          wxMessageBox("This option is already in the form.");
-          return;
-        }
+      if (rrd_value.min < 0) {
+        wxMessageBox("Random ranges with negative bounds are not supported.");
+        return;
+      }
+    }
 
-        AddWeightRow(rrd_value, weighted_box_sizer->GetStaticBox(),
-                     weighted_sizer_);
-        Layout();
-        Fit();
-      });
+    if (weights_.count(rrd_value)) {
+      wxMessageBox("This option is already in the form.");
+      return;
+    }
+
+    AddWeightRow(rrd_value, weighted_box_sizer->GetStaticBox(),
+                 weighted_sizer_);
+    Layout();
+    Fit();
+  });
 
   // Load the weights from the option value.
   if (option_value.random && !option_value.weighting.empty()) {
@@ -439,11 +444,17 @@ RandomRangeDialog::RandomRangeDialog(const OptionDefinition* option_definition,
 }
 
 void RandomRangeDialog::OnOK(wxCommandEvent& event) {
-  if (modes_box_->GetSelection() == 1 && enable_range_subset_->GetValue() &&
-      subset_min_->GetValue() >= subset_max_->GetValue()) {
-    wxMessageBox(
-        "Range subset minimum must be strictly less than the maximum.");
-    return;
+  if (modes_box_->GetSelection() == 1 && enable_range_subset_->GetValue()) {
+    if (subset_min_->GetValue() >= subset_max_->GetValue()) {
+      wxMessageBox(
+          "Range subset minimum must be strictly less than the maximum.");
+      return;
+    }
+
+    if (subset_min_->GetValue() < 0) {
+      wxMessageBox("Random ranges with negative bounds are not supported.");
+      return;
+    }
   }
 
   if (modes_box_->GetSelection() == 2) {
