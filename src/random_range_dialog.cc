@@ -3,6 +3,7 @@
 #include <wx/spinctrl.h>
 
 #include "game_definition.h"
+#include "numeric_picker.h"
 #include "world.h"
 
 RrdValue::RrdValue(const OptionValue& ov) {
@@ -193,48 +194,30 @@ RandomRangeDialog::RandomRangeDialog(const OptionDefinition* option_definition,
   }
 
   // Range subset form for regular randomization.
-  wxFlexGridSizer* subset_sizer = new wxFlexGridSizer(3, 10, 10);
+  wxFlexGridSizer* subset_sizer = new wxFlexGridSizer(2, 10, 10);
   subset_sizer->AddGrowableCol(1);
 
   int regular_min_value = option_value.range_subset
                               ? std::get<0>(*option_value.range_subset)
                               : option_definition->min_value;
-  wxStaticText* subset_min_label =
-      new wxStaticText(regular_box_sizer->GetStaticBox(), wxID_ANY,
-                       std::to_string(regular_min_value));
-  subset_min_ = new wxSlider(regular_box_sizer->GetStaticBox(), wxID_ANY,
-                             regular_min_value, option_definition->min_value,
-                             option_definition->max_value);
-  subset_min_->Bind(
-      wxEVT_SLIDER, [this, subset_min_label, subset_sizer](wxCommandEvent&) {
-        subset_min_label->SetLabel(std::to_string(subset_min_->GetValue()));
-        subset_sizer->Layout();
-      });
+  subset_min_ = new NumericPicker(
+      regular_box_sizer->GetStaticBox(), wxID_ANY, option_definition->min_value,
+      option_definition->max_value, regular_min_value);
 
   subset_sizer->Add(new wxStaticText(regular_box_sizer->GetStaticBox(),
                                      wxID_ANY, "Minimum:"));
   subset_sizer->Add(subset_min_, wxSizerFlags().Expand());
-  subset_sizer->Add(subset_min_label);
 
   int regular_max_value = option_value.range_subset
                               ? std::get<1>(*option_value.range_subset)
                               : option_definition->max_value;
-  wxStaticText* subset_max_label =
-      new wxStaticText(regular_box_sizer->GetStaticBox(), wxID_ANY,
-                       std::to_string(regular_max_value));
-  subset_max_ = new wxSlider(regular_box_sizer->GetStaticBox(), wxID_ANY,
-                             regular_max_value, option_definition->min_value,
-                             option_definition->max_value);
-  subset_max_->Bind(
-      wxEVT_SLIDER, [this, subset_max_label, subset_sizer](wxCommandEvent&) {
-        subset_max_label->SetLabel(std::to_string(subset_max_->GetValue()));
-        subset_sizer->Layout();
-      });
+  subset_max_ = new NumericPicker(
+      regular_box_sizer->GetStaticBox(), wxID_ANY, option_definition->min_value,
+      option_definition->max_value, regular_max_value);
 
   subset_sizer->Add(new wxStaticText(regular_box_sizer->GetStaticBox(),
                                      wxID_ANY, "Maximum:"));
   subset_sizer->Add(subset_max_, wxSizerFlags().Expand());
-  subset_sizer->Add(subset_max_label);
 
   enable_range_subset_ = new wxCheckBox(regular_box_sizer->GetStaticBox(),
                                         wxID_ANY, "Restrict to sub-range");
@@ -278,7 +261,7 @@ RandomRangeDialog::RandomRangeDialog(const OptionDefinition* option_definition,
   wxStaticBoxSizer* weighted_box_sizer = new wxStaticBoxSizer(
       wxVERTICAL, weighted_panel_, "Weighted Randomization Options");
 
-  weighted_sizer_ = new wxFlexGridSizer(4, 10, 10);
+  weighted_sizer_ = new wxFlexGridSizer(3, 10, 10);
   weighted_sizer_->AddGrowableCol(1);
 
   // Add a control for adding static value rows.
@@ -306,7 +289,6 @@ RandomRangeDialog::RandomRangeDialog(const OptionDefinition* option_definition,
 
   weighted_sizer_->Add(add_static_spin, wxSizerFlags().Expand());
   weighted_sizer_->Add(add_static_button);
-  weighted_sizer_->Add(0, 0);
   weighted_sizer_->Add(0, 0);
 
   weighted_box_sizer->Add(weighted_sizer_,
@@ -509,21 +491,16 @@ void RandomRangeDialog::AddWeightRow(const RrdValue& value, wxWindow* parent,
                                      int deleteable) {
   WeightRow wr;
   wr.weight = default_value;
-  wr.row_slider = new wxSlider(parent, wxID_ANY, default_value, 0, 50);
-  wr.row_label =
-      new wxStaticText(parent, wxID_ANY, std::to_string(default_value));
+  wr.row_slider = new NumericPicker(parent, wxID_ANY, 0, 50, default_value);
 
-  wr.row_slider->Bind(wxEVT_SLIDER, [this, value](wxCommandEvent&) {
+  wr.row_slider->Bind(EVT_PICK_NUMBER, [this, value](wxCommandEvent&) {
     WeightRow& wr = weights_[value];
     wr.weight = wr.row_slider->GetValue();
-    wr.row_label->SetLabel(std::to_string(wr.row_slider->GetValue()));
-    wr.row_label->GetContainingSizer()->Layout();
   });
 
   wr.header_label = new wxStaticText(parent, wxID_ANY, value.ToString());
   sizer->Add(wr.header_label);
   sizer->Add(wr.row_slider, wxSizerFlags().Expand());
-  sizer->Add(wr.row_label, wxSizerFlags().Align(wxALIGN_RIGHT));
 
   if (deleteable) {
     wr.delete_button = new wxButton(parent, wxID_ANY, "X", wxDefaultPosition,
@@ -547,7 +524,6 @@ void RandomRangeDialog::OnDeleteClicked(wxCommandEvent& event) {
 
   const WeightRow& wr = weights_[rrd_value];
   wr.header_label->Destroy();
-  wr.row_label->Destroy();
   wr.delete_button->Destroy();
   wr.row_slider->Destroy();
   Layout();

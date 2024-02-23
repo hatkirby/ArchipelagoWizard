@@ -1,6 +1,7 @@
 #include "random_choice_dialog.h"
 
 #include "game_definition.h"
+#include "numeric_picker.h"
 #include "world.h"
 
 RandomChoiceDialog::RandomChoiceDialog(
@@ -73,31 +74,25 @@ RandomChoiceDialog::RandomChoiceDialog(
   wxStaticBoxSizer* weighted_sizer = new wxStaticBoxSizer(
       wxVERTICAL, weighted_panel_, "Weighted Randomization Options");
 
-  wxFlexGridSizer* rows_sizer = new wxFlexGridSizer(3, 10, 10);
+  wxFlexGridSizer* rows_sizer = new wxFlexGridSizer(2, 10, 10);
   rows_sizer->AddGrowableCol(1);
 
   for (int i = 0; i < option_definition->choices.GetItems().size(); i++) {
     const auto& [option_value, option_display] =
         option_definition->choices.GetItems().at(i);
 
-    wxSlider* row_slider =
-        new wxSlider(weighted_sizer->GetStaticBox(), wxID_ANY,
-                     weights_[option_value], 0, 50);
-    wxStaticText* row_label =
-        new wxStaticText(weighted_sizer->GetStaticBox(), wxID_ANY,
-                         std::to_string(weights_[option_value]));
+    NumericPicker* row_input =
+        new NumericPicker(weighted_sizer->GetStaticBox(), wxID_ANY, 0, 50,
+                          weights_[option_value]);
 
-    row_slider->Bind(wxEVT_SLIDER, [this, ov = option_value, row_slider,
-                                    row_label](wxCommandEvent&) {
-      weights_[ov] = row_slider->GetValue();
-      row_label->SetLabel(std::to_string(row_slider->GetValue()));
-      row_label->GetContainingSizer()->Layout();
-    });
+    row_input->Bind(EVT_PICK_NUMBER,
+                    [this, ov = option_value, row_input](wxCommandEvent&) {
+                      weights_[ov] = row_input->GetValue();
+                    });
 
     rows_sizer->Add(new wxStaticText(weighted_sizer->GetStaticBox(), wxID_ANY,
                                      option_display));
-    rows_sizer->Add(row_slider, wxSizerFlags().Expand());
-    rows_sizer->Add(row_label, wxSizerFlags().Align(wxALIGN_RIGHT));
+    rows_sizer->Add(row_input, wxSizerFlags().Expand());
   }
 
   weighted_sizer->Add(rows_sizer, wxSizerFlags().Proportion(1).Expand());

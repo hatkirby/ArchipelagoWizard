@@ -20,10 +20,10 @@
 #include "world.h"
 
 class wxChoice;
-class wxSlider;
 class wxTextCtrl;
 class wxBoxSizer;
 class wxToggleButton;
+class NumericPicker;
 class WizardEditor;
 class World;
 
@@ -37,7 +37,7 @@ class FormOption {
  private:
   friend class WizardEditor;
 
-  void OnRangeSliderChanged(wxCommandEvent& event);
+  void OnRangePickerChanged(wxCommandEvent& event);
   void OnNamedRangeChanged(wxCommandEvent& event);
   void OnSelectChanged(wxCommandEvent& event);
   void OnListItemChecked(wxCommandEvent& event);
@@ -52,8 +52,7 @@ class FormOption {
   std::string option_name_;
   wxStaticText* option_label_ = nullptr;
   wxChoice* combo_box_ = nullptr;
-  wxSlider* slider_ = nullptr;
-  wxStaticText* label_ = nullptr;
+  NumericPicker* numeric_picker_ = nullptr;
   wxCheckListBox* list_box_ = nullptr;
   wxToggleButton* random_button_ = nullptr;
   wxButton* open_choice_btn_ = nullptr;

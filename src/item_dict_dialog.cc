@@ -33,8 +33,7 @@ ItemDictDialog::ItemDictDialog(const Game* game, const std::string& option_name,
 
   // Set up the source list
   wxPanel* lists_panel = new wxPanel(this, wxID_ANY);
-  wxBoxSizer* lists_sizer =
-      new wxBoxSizer(wxHORIZONTAL);
+  wxBoxSizer* lists_sizer = new wxBoxSizer(wxHORIZONTAL);
 
   item_picker_ = new FilterableItemPicker(
       lists_panel, wxID_ANY,
@@ -121,7 +120,8 @@ void ItemDictDialog::AddRow(const std::string& value, wxWindow* parent,
   });
 
   wr.display_label = new wxStaticText(parent, wxID_ANY, value);
-  sizer->Add(wr.display_label, wxSizerFlags().Align(wxALIGN_CENTRE_VERTICAL).Expand());
+  sizer->Add(wr.display_label,
+             wxSizerFlags().Align(wxALIGN_CENTRE_VERTICAL).Expand());
   sizer->Add(wr.spin_ctrl, wxSizerFlags().Expand());
 
   wr.delete_button = new wxButton(parent, wxID_ANY, "X", wxDefaultPosition,

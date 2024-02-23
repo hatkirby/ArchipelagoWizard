@@ -4,6 +4,7 @@
 #include <wx/tglbtn.h>
 
 #include "item_dict_dialog.h"
+#include "numeric_picker.h"
 #include "option_set_dialog.h"
 #include "random_choice_dialog.h"
 #include "random_range_dialog.h"
@@ -233,20 +234,11 @@ FormOption::FormOption(WizardEditor* parent, wxWindow* container,
 
     randomizable = true;
   } else if (game_option.type == kRangeOption) {
-    slider_ =
-        new wxSlider(container, wxID_ANY, game_option.default_value.int_value,
-                     game_option.min_value, game_option.max_value);
-    slider_->Bind(wxEVT_SLIDER, &FormOption::OnRangeSliderChanged, this);
-
-    label_ = new wxStaticText(container, wxID_ANY, "");
-
-    wxFlexGridSizer* range_sizer = new wxFlexGridSizer(2, 10, 10);
-    range_sizer->AddGrowableCol(0);
-
-    range_sizer->Add(slider_, wxSizerFlags().Expand());
-    range_sizer->Add(label_, wxSizerFlags().Align(wxALIGN_RIGHT));
-
-    wxSizer* final_sizer = range_sizer;
+    numeric_picker_ = new NumericPicker(
+        container, wxID_ANY, game_option.min_value, game_option.max_value,
+        game_option.default_value.int_value);
+    numeric_picker_->Bind(EVT_PICK_NUMBER, &FormOption::OnRangePickerChanged,
+                          this);
 
     if (game_option.named_range) {
       combo_box_ = new wxChoice(container, wxID_ANY);
@@ -262,12 +254,12 @@ FormOption::FormOption(WizardEditor* parent, wxWindow* container,
       wxBoxSizer* named_sizer = new wxBoxSizer(wxVERTICAL);
       named_sizer->Add(combo_box_, wxSizerFlags().Expand());
       named_sizer->AddSpacer(5);
-      named_sizer->Add(range_sizer, wxSizerFlags().Expand());
+      named_sizer->Add(numeric_picker_, wxSizerFlags().Expand());
 
-      final_sizer = named_sizer;
+      sizer->Add(named_sizer, wxSizerFlags().Expand());
+    } else {
+      sizer->Add(numeric_picker_, wxSizerFlags().Expand());
     }
-
-    sizer->Add(final_sizer, wxSizerFlags().Expand());
 
     randomizable = true;
   } else if (game_option.type == kSetOption ||
@@ -349,7 +341,7 @@ void FormOption::PopulateFromWorld() {
     }
   } else if (game_option.type == kRangeOption) {
     if (ov.error) {
-      slider_->Disable();
+      numeric_picker_->Disable();
       random_button_->Disable();
       random_button_->SetValue(false);
 
@@ -357,7 +349,7 @@ void FormOption::PopulateFromWorld() {
         combo_box_->Disable();
       }
     } else if (ov.random) {
-      slider_->Disable();
+      numeric_picker_->Disable();
       random_button_->SetValue(true);
       random_button_->Enable();
 
@@ -365,9 +357,8 @@ void FormOption::PopulateFromWorld() {
         combo_box_->Disable();
       }
     } else {
-      slider_->Enable();
-      slider_->SetValue(ov.int_value);
-      label_->SetLabel(std::to_string(ov.int_value));
+      numeric_picker_->Enable();
+      numeric_picker_->SetValue(ov.int_value);
       random_button_->Enable();
       random_button_->SetValue(false);
 
@@ -403,13 +394,10 @@ void FormOption::PopulateFromWorld() {
   }
 }
 
-void FormOption::OnRangeSliderChanged(wxCommandEvent& event) {
-  if (slider_ == nullptr || label_ == nullptr) {
+void FormOption::OnRangePickerChanged(wxCommandEvent& event) {
+  if (numeric_picker_ == nullptr) {
     return;
   }
-
-  label_->SetLabel(std::to_string(slider_->GetValue()));
-  label_->GetContainingSizer()->Layout();
 
   if (combo_box_ != nullptr) {
     const Game& game =
@@ -417,8 +405,8 @@ void FormOption::OnRangeSliderChanged(wxCommandEvent& event) {
     const OptionDefinition& game_option = game.GetOption(option_name_);
 
     int selection;
-    if (game_option.value_names.HasKey(slider_->GetValue())) {
-      selection = game_option.value_names.GetKeyId(slider_->GetValue());
+    if (game_option.value_names.HasKey(numeric_picker_->GetValue())) {
+      selection = game_option.value_names.GetKeyId(numeric_picker_->GetValue());
     } else {
       selection = combo_box_->GetCount() - 1;
     }
@@ -432,7 +420,7 @@ void FormOption::OnRangeSliderChanged(wxCommandEvent& event) {
 }
 
 void FormOption::OnNamedRangeChanged(wxCommandEvent& event) {
-  if (combo_box_ == nullptr || slider_ == nullptr) {
+  if (combo_box_ == nullptr || numeric_picker_ == nullptr) {
     return;
   }
 
@@ -443,13 +431,8 @@ void FormOption::OnNamedRangeChanged(wxCommandEvent& event) {
   if (game_option.value_names.HasId(combo_box_->GetSelection())) {
     int result = game_option.value_names.GetKeyById(combo_box_->GetSelection());
 
-    if (result != slider_->GetValue()) {
-      slider_->SetValue(result);
-
-      if (label_ != nullptr) {
-        label_->SetLabel(std::to_string(slider_->GetValue()));
-        label_->GetContainingSizer()->Layout();
-      }
+    if (result != numeric_picker_->GetValue()) {
+      numeric_picker_->SetValue(result);
 
       SaveToWorld();
     }
@@ -575,7 +558,7 @@ void FormOption::SaveToWorld() {
     new_value.string_value = std::get<0>(
         game_option.choices.GetItems().at(combo_box_->GetSelection()));
   } else if (game_option.type == kRangeOption) {
-    new_value.int_value = slider_->GetValue();
+    new_value.int_value = numeric_picker_->GetValue();
   } else if (game_option.type == kSetOption) {
     if (list_box_ != nullptr) {
       for (size_t i = 0; i < list_box_->GetCount(); i++) {

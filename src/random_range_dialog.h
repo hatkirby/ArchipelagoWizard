@@ -13,6 +13,7 @@
 
 #include "world.h"
 
+class NumericPicker;
 struct OptionDefinition;
 
 struct RrdValue {
@@ -45,9 +46,8 @@ class RandomRangeDialog : public wxDialog {
 
   struct WeightRow {
     wxStaticText* header_label;
-    wxStaticText* row_label;
     wxButton* delete_button;
-    wxSlider* row_slider;
+    NumericPicker* row_slider;
 
     int weight = -1;
   };
@@ -57,8 +57,8 @@ class RandomRangeDialog : public wxDialog {
   wxPanel* regular_panel_;
   RandomValueType chosen_random_type_ = kUniformRandom;
   wxCheckBox* enable_range_subset_;
-  wxSlider* subset_min_;
-  wxSlider* subset_max_;
+  NumericPicker* subset_min_;
+  NumericPicker* subset_max_;
   wxButton* add_regular_button_;
 
   wxPanel* weighted_panel_;
