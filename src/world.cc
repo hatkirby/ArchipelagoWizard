@@ -43,20 +43,22 @@ OptionValue OptionValueForRangeValue(const OptionDefinition& option,
     try {
       option_value.int_value = node.as<int>();
 
-      if (option_value.int_value < option.min_value) {
-        wxString error;
-        error << "Value ";
-        error << str_val;
-        error << " is too small.";
+      if (!option.value_names.HasKey(option_value.int_value)) {
+        if (option_value.int_value < option.min_value) {
+          wxString error;
+          error << "Value ";
+          error << str_val;
+          error << " is too small.";
 
-        option_value.error = error.ToStdString();
-      } else if (option_value.int_value > option.max_value) {
-        wxString error;
-        error << "Value ";
-        error << str_val;
-        error << " is too large.";
+          option_value.error = error.ToStdString();
+        } else if (option_value.int_value > option.max_value) {
+          wxString error;
+          error << "Value ";
+          error << str_val;
+          error << " is too large.";
 
-        option_value.error = error.ToStdString();
+          option_value.error = error.ToStdString();
+        }
       }
     } catch (const std::exception&) {
       wxString error;
@@ -189,12 +191,19 @@ void World::SetOption(const std::string& option_name,
             yaml_[*game_][option_name]
                  [RandomOptionValueToString(weight_value)] =
                      weight_value.weight;
+          } else if (option.value_names.HasKey(weight_value.int_value)) {
+            yaml_[*game_][option_name]
+                 [option.value_names.GetByKey(weight_value.int_value)] =
+                     weight_value.weight;
           } else {
             yaml_[*game_][option_name][weight_value.int_value] =
                 weight_value.weight;
           }
         }
       }
+    } else if (option.value_names.HasKey(option_value.int_value)) {
+      yaml_[*game_][option_name] =
+          option.value_names.GetByKey(option_value.int_value);
     } else {
       yaml_[*game_][option_name] = option_value.int_value;
     }

@@ -31,7 +31,7 @@ void NumericPicker::SetValue(int v) {
       slider_->SetValue(value_);
     }
     if (spin_ctrl_->GetValue() != value_) {
-      spin_ctrl_->SetValue(value_);
+      spin_ctrl_->SetValue(std::to_string(value_));
     }
 
     wxCommandEvent picked_event(EVT_PICK_NUMBER, GetId());

@@ -8,6 +8,7 @@
 #endif
 
 #include <map>
+#include <optional>
 #include <sstream>
 #include <string>
 
@@ -17,7 +18,7 @@ class NumericPicker;
 struct OptionDefinition;
 
 struct RrdValue {
-  int static_value = -1;
+  std::optional<int> static_value;
   RandomValueType type = kUNKNOWN_RANDOM_VALUE_TYPE;
   int min = -1;
   int max = -1;
@@ -25,7 +26,7 @@ struct RrdValue {
   RrdValue() = default;
   explicit RrdValue(const OptionValue& ov);
   OptionValue ToOptionValue() const;
-  std::string ToString() const;
+  std::string ToString(const OptionDefinition& option_definition) const;
   bool operator<(const RrdValue& rhs) const;
 };
 
@@ -51,6 +52,8 @@ class RandomRangeDialog : public wxDialog {
 
     int weight = -1;
   };
+
+  const OptionDefinition* option_definition_;
 
   wxRadioBox* modes_box_;
 

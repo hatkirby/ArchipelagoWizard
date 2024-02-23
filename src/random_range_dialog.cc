@@ -4,6 +4,7 @@
 
 #include "game_definition.h"
 #include "numeric_picker.h"
+#include "util.h"
 #include "world.h"
 
 RrdValue::RrdValue(const OptionValue& ov) {
@@ -21,8 +22,8 @@ RrdValue::RrdValue(const OptionValue& ov) {
 OptionValue RrdValue::ToOptionValue() const {
   OptionValue result;
 
-  if (static_value != -1) {
-    result.int_value = static_value;
+  if (static_value) {
+    result.int_value = *static_value;
   } else {
     result.random = true;
     result.range_random_type = type;
@@ -35,11 +36,21 @@ OptionValue RrdValue::ToOptionValue() const {
   return result;
 }
 
-std::string RrdValue::ToString() const {
+std::string RrdValue::ToString(
+    const OptionDefinition& option_definition) const {
   std::ostringstream output;
 
-  if (static_value != -1) {
-    output << static_value;
+  if (static_value) {
+    if (option_definition.value_names.HasKey(*static_value)) {
+      output << ConvertToTitleCase(
+                    option_definition.value_names.GetByKey(*static_value))
+                    .ToStdString();
+      output << " (";
+      output << *static_value;
+      output << ")";
+    } else {
+      output << *static_value;
+    }
   } else if (min != -1) {
     output << min << " to " << max;
 
@@ -96,7 +107,8 @@ bool RrdValue::operator<(const RrdValue& rhs) const {
 
 RandomRangeDialog::RandomRangeDialog(const OptionDefinition* option_definition,
                                      const OptionValue& option_value)
-    : wxDialog(nullptr, wxID_ANY, "Randomization Settings") {
+    : wxDialog(nullptr, wxID_ANY, "Randomization Settings"),
+      option_definition_(option_definition) {
   // Initialise the form.
   wxBoxSizer* top_sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -347,28 +359,43 @@ RandomRangeDialog::RandomRangeDialog(const OptionDefinition* option_definition,
   }
 
   // Bring in default values for weighting table.
-  auto add_static_random_row = [this, weighted_box_sizer,
-                                option_definition](RandomValueType rvt) {
-    RrdValue rrd_value;
-    rrd_value.type = rvt;
+  if (!option_definition->named_range) {
+    auto add_static_random_row = [this, weighted_box_sizer,
+                                  option_definition](RandomValueType rvt) {
+      RrdValue rrd_value;
+      rrd_value.type = rvt;
 
-    if (weights_.count(rrd_value)) {
-      return;
+      if (weights_.count(rrd_value)) {
+        return;
+      }
+
+      int default_value =
+          option_definition->default_value.random &&
+                  option_definition->default_value.range_random_type == rvt
+              ? 50
+              : 0;
+      AddWeightRow(rrd_value, weighted_box_sizer->GetStaticBox(),
+                   weighted_sizer_, default_value, /*deleteable=*/false);
+    };
+
+    add_static_random_row(kUniformRandom);
+    add_static_random_row(kLowRandom);
+    add_static_random_row(kMiddleRandom);
+    add_static_random_row(kHighRandom);
+  } else {
+    for (const auto& [value, name] :
+         option_definition->value_names.GetItems()) {
+      RrdValue rrd_value;
+      rrd_value.static_value = value;
+
+      if (weights_.count(rrd_value)) {
+        continue;
+      }
+
+      AddWeightRow(rrd_value, weighted_box_sizer->GetStaticBox(),
+                   weighted_sizer_, 0, /*deleteable=*/false);
     }
-
-    int default_value =
-        option_definition->default_value.random &&
-                option_definition->default_value.range_random_type == rvt
-            ? 50
-            : 0;
-    AddWeightRow(rrd_value, weighted_box_sizer->GetStaticBox(), weighted_sizer_,
-                 default_value, /*deleteable=*/false);
-  };
-
-  add_static_random_row(kUniformRandom);
-  add_static_random_row(kLowRandom);
-  add_static_random_row(kMiddleRandom);
-  add_static_random_row(kHighRandom);
+  }
 
   // Enable the form based on the option value.
   if (option_value.random) {
@@ -498,7 +525,8 @@ void RandomRangeDialog::AddWeightRow(const RrdValue& value, wxWindow* parent,
     wr.weight = wr.row_slider->GetValue();
   });
 
-  wr.header_label = new wxStaticText(parent, wxID_ANY, value.ToString());
+  wr.header_label =
+      new wxStaticText(parent, wxID_ANY, value.ToString(*option_definition_));
   sizer->Add(wr.header_label);
   sizer->Add(wr.row_slider, wxSizerFlags().Expand());
 
