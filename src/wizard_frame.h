@@ -31,6 +31,7 @@ class WizardFrame : public wxFrame {
   void OnAbout(wxCommandEvent& event);
   void OnWorldSelecting(wxTreeEvent& event);
   void OnWorldSelected(wxTreeEvent& event);
+  void OnWorldRightClick(wxTreeEvent& event);
 
   void InitializeWorld(std::unique_ptr<World> world);
   void SyncWorldIndices();

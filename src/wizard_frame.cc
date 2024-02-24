@@ -71,6 +71,8 @@ WizardFrame::WizardFrame()
                     this);
   world_list_->Bind(wxEVT_TREE_SEL_CHANGED, &WizardFrame::OnWorldSelected,
                     this);
+  world_list_->Bind(wxEVT_TREE_ITEM_RIGHT_CLICK,
+                    &WizardFrame::OnWorldRightClick, this);
 
   message_pane_ = new wxScrolledWindow(left_pane, wxID_ANY);
 
@@ -269,6 +271,18 @@ void WizardFrame::OnWorldSelected(wxTreeEvent& event) {
         world_list_->GetItemData(event.GetItem()));
     world_window_->LoadWorld(data->world);
   }
+}
+
+void WizardFrame::OnWorldRightClick(wxTreeEvent& event) {
+  if (!event.GetItem().IsOk() ||
+      event.GetItem() == world_list_->GetRootItem()) {
+    return;
+  }
+
+  wxMenu popup_menu;
+  popup_menu.Append(ID_CLOSE_WORLD, "&Close");
+
+  PopupMenu(&popup_menu, ScreenToClient(wxGetMousePosition()));
 }
 
 void WizardFrame::InitializeWorld(std::unique_ptr<World> world) {
