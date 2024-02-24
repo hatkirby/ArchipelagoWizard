@@ -45,6 +45,7 @@ class WizardFrame : public wxFrame {
   wxTreeCtrl* world_list_;
   WorldWindow* world_window_;
 
+  wxSplitterWindow* left_pane_;
   wxScrolledWindow* message_pane_;
   wxStaticText* message_header_;
   wxStaticText* message_window_;

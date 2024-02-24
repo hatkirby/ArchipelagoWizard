@@ -61,9 +61,10 @@ WizardFrame::WizardFrame()
   splitter_window_ = new wxSplitterWindow(this, wxID_ANY);
   splitter_window_->SetMinimumPaneSize(250);
 
-  wxPanel* left_pane = new wxPanel(splitter_window_, wxID_ANY);
+  left_pane_ = new wxSplitterWindow(splitter_window_, wxID_ANY);
+  left_pane_->SetMinimumPaneSize(150);
 
-  world_list_ = new wxTreeCtrl(left_pane, wxID_ANY, wxDefaultPosition,
+  world_list_ = new wxTreeCtrl(left_pane_, wxID_ANY, wxDefaultPosition,
                                wxDefaultSize, wxTR_HIDE_ROOT);
   wxTreeItemId root_id = world_list_->AddRoot("Multiworld");
 
@@ -74,7 +75,7 @@ WizardFrame::WizardFrame()
   world_list_->Bind(wxEVT_TREE_ITEM_RIGHT_CLICK,
                     &WizardFrame::OnWorldRightClick, this);
 
-  message_pane_ = new wxScrolledWindow(left_pane, wxID_ANY);
+  message_pane_ = new wxScrolledWindow(left_pane_, wxID_ANY);
 
   message_header_ = new wxStaticText(message_pane_, wxID_ANY, "");
   message_header_->SetFont(message_header_->GetFont().Bold());
@@ -82,24 +83,19 @@ WizardFrame::WizardFrame()
   message_window_ = new wxStaticText(message_pane_, wxID_ANY, "");
 
   wxBoxSizer* msg_sizer = new wxBoxSizer(wxVERTICAL);
-  msg_sizer->Add(message_header_, wxSizerFlags().Expand());
-  msg_sizer->AddSpacer(10);
-  msg_sizer->Add(message_window_, wxSizerFlags().Expand());
+  msg_sizer->Add(message_header_, wxSizerFlags().DoubleBorder().Expand());
+  msg_sizer->Add(message_window_,
+                 wxSizerFlags().DoubleBorder(wxALL & ~wxUP).Expand());
   message_pane_->SetSizer(msg_sizer);
   message_pane_->Layout();
 
-  wxBoxSizer* left_sizer = new wxBoxSizer(wxVERTICAL);
-  left_sizer->Add(world_list_, wxSizerFlags().Proportion(4).Expand());
-  left_sizer->Add(message_pane_,
-                  wxSizerFlags().DoubleBorder().Proportion(1).Expand());
-  left_pane->SetSizer(left_sizer);
-  left_pane->Layout();
+  left_pane_->SplitHorizontally(world_list_, message_pane_, -150);
 
   message_pane_->SetScrollRate(0, 5);
 
   world_window_ = new WorldWindow(splitter_window_, game_definitions_.get());
 
-  splitter_window_->SplitVertically(left_pane, world_window_, 250);
+  splitter_window_->SplitVertically(left_pane_, world_window_, 250);
 
   world_window_->SetMessageCallback(
       [this](const wxString& header, const wxString& msg) {
@@ -332,7 +328,7 @@ void WizardFrame::UpdateWorldDisplay(World* world, wxTreeItemId tree_item_id) {
 
 void WizardFrame::ShowMessage(const wxString& header, const wxString& msg) {
   for (int i = 0; i < 2; i++) {
-    int width = message_pane_->GetClientSize().GetWidth();
+    int width = message_window_->GetClientSize().GetWidth();
     message_header_->SetLabel(header);
     message_header_->Wrap(width);
 
