@@ -19,6 +19,9 @@ WizardEditor::WizardEditor(wxWindow* parent,
   name_box_ = new wxTextCtrl(this, wxID_ANY);
   name_box_->Bind(wxEVT_TEXT, &WizardEditor::OnChangeName, this);
 
+  description_box_ = new wxTextCtrl(this, wxID_ANY);
+  description_box_->Bind(wxEVT_TEXT, &WizardEditor::OnChangeDescription, this);
+
   game_box_ = new wxChoice(this, wxID_ANY);
 
   game_box_->Append("");
@@ -27,9 +30,6 @@ WizardEditor::WizardEditor(wxWindow* parent,
   }
 
   game_box_->Bind(wxEVT_CHOICE, &WizardEditor::OnChangeGame, this);
-
-  description_box_ = new wxTextCtrl(this, wxID_ANY);
-  description_box_->Bind(wxEVT_TEXT, &WizardEditor::OnChangeDescription, this);
 
   preset_label_ = new wxStaticText(this, wxID_ANY, "Preset:");
   preset_label_->Hide();
