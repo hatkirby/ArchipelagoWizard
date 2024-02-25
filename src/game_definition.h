@@ -68,6 +68,7 @@ struct OptionDefinition {
 
   OrderedBijection<int, std::string> choices;  // id, name
   std::vector<std::string> choice_names;
+  std::map<std::string, std::string> aliases;  // alias, name
 
   OptionValue default_value;
 };

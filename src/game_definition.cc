@@ -77,6 +77,10 @@ GameDefinitions::GameDefinitions() {
         } else {
           option.default_value.string_value = option_data["defaultValue"];
         }
+
+        for (const auto& alias : option_data["aliases"]) {
+          option.aliases[alias["name"]] = alias["value"];
+        }
       } else if (option_data["type"] == "options-set") {
         option.type = kSetOption;
         option.set_type = kCustomSet;

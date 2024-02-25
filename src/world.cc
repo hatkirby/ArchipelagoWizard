@@ -16,6 +16,8 @@ OptionValue OptionValueForChoiceValue(const OptionDefinition& option,
   std::string str_val = node.as<std::string>();
   if (option.choices.HasValue(str_val)) {
     option_value.string_value = str_val;
+  } else if (option.aliases.count(str_val)) {
+    option_value.string_value = option.aliases.at(str_val);
   } else if (str_val == "random") {
     option_value.random = true;
   } else {
