@@ -1,9 +1,9 @@
+import argparse
 import json
 import logging
 import typing
 
 import Options
-from worlds.AutoWorld import AutoWorldRegister
 
 common_option_names = ["start_inventory", "local_items", "non_local_items", "start_hints", "start_location_hints",
                        "exclude_locations", "priority_locations", "start_inventory_from_pool", "item_links"]
@@ -15,8 +15,10 @@ def get_html_doc(option_type: type(Options.Option)) -> str:
     return "\n".join(line.strip() for line in option_type.__doc__.split("\n")).strip()
 
 
-def dump():
+def dump(output_path: str):
     options_output = {}
+
+    from worlds.AutoWorld import AutoWorldRegister
 
     for game_name, world in AutoWorldRegister.world_types.items():
         if game_name == "Archipelago":
@@ -126,7 +128,7 @@ def dump():
                     }
 
             else:
-                logging.debug(f"{option} not exported to Web Options.")
+                logging.debug(f"{option} not exported.")
 
         options_output[game_name] = {
             "options": game_options,
@@ -144,9 +146,14 @@ def dump():
             "presets": world.web.options_presets,
         }
 
-    with open("dumped-options.json", "w") as f:
+    with open(output_path, "w") as f:
         json.dump(options_output, f, indent=2, separators=(',', ': '))
 
 
 if __name__ == '__main__':
-    dump()
+    parser = argparse.ArgumentParser(description="World options dumper")
+    parser.add_argument('--output_path', default="dumped-options.json",
+                        help='Path to the file where the dumped options should be written')
+    args = parser.parse_args()
+
+    dump(args.output_path)
