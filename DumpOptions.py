@@ -32,7 +32,7 @@ def dump():
 
             elif issubclass(option, Options.Choice) or issubclass(option, Options.Toggle):
                 game_options[option_name] = this_option = {
-                    "type": "select",
+                    "type": "text-select" if issubclass(option, Options.TextChoice) else "select",
                     "displayName": option.display_name if hasattr(option, "display_name") else option_name,
                     "description": get_html_doc(option),
                     "defaultValue": None,
@@ -42,6 +42,7 @@ def dump():
                 for sub_option_id, sub_option_name in option.name_lookup.items():
                     if sub_option_name != "Random":
                         this_option["options"].append({
+                            "id": sub_option_id,
                             "name": option.get_option_name(sub_option_id),
                             "value": sub_option_name,
                         })

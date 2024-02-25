@@ -12,17 +12,17 @@ RandomChoiceDialog::RandomChoiceDialog(
     weights_[weight_value.string_value] = weight_value.weight;
   }
 
-  for (const auto& [option_id, option_display] :
+  for (const auto& [option_id, option_name] :
        option_definition->choices.GetItems()) {
-    if (weights_.count(option_id)) {
+    if (weights_.count(option_name)) {
       continue;
     }
 
     if (option_value.weighting.empty() &&
-        option_id == option_definition->default_value.string_value) {
-      weights_[option_id] = 50;
+        option_name == option_definition->default_value.string_value) {
+      weights_[option_name] = 50;
     } else {
-      weights_[option_id] = 0;
+      weights_[option_name] = 0;
     }
   }
 
@@ -78,20 +78,21 @@ RandomChoiceDialog::RandomChoiceDialog(
   rows_sizer->AddGrowableCol(1);
 
   for (int i = 0; i < option_definition->choices.GetItems().size(); i++) {
-    const auto& [option_value, option_display] =
+    const auto& [option_id, option_name] =
         option_definition->choices.GetItems().at(i);
 
-    NumericPicker* row_input =
-        new NumericPicker(weighted_sizer->GetStaticBox(), wxID_ANY, 0, 50,
-                          weights_[option_value]);
+    NumericPicker* row_input = new NumericPicker(
+        weighted_sizer->GetStaticBox(), wxID_ANY, 0, 50, weights_[option_name]);
 
     row_input->Bind(EVT_PICK_NUMBER,
-                    [this, ov = option_value, row_input](wxCommandEvent&) {
+                    [this, ov = option_name, row_input](wxCommandEvent&) {
                       weights_[ov] = row_input->GetValue();
                     });
 
-    rows_sizer->Add(new wxStaticText(weighted_sizer->GetStaticBox(), wxID_ANY,
-                                     option_display));
+    rows_sizer->Add(
+        new wxStaticText(weighted_sizer->GetStaticBox(), wxID_ANY,
+                         option_definition->choice_names.at(
+                             option_definition->choices.GetKeyId(option_id))));
     rows_sizer->Add(row_input, wxSizerFlags().Expand());
   }
 

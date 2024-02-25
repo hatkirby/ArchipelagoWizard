@@ -59,7 +59,17 @@ GameDefinitions::GameDefinitions() {
         option.type = kSelectOption;
 
         for (const auto& choice : option_data["options"]) {
-          option.choices.Append(choice["value"], choice["name"]);
+          int int_val;
+          if (choice["id"].is_number()) {
+            int_val = choice["id"];
+          } else {
+            // Tjere's at least one instance where the ID is incorrectly
+            // configured as an array with one value.
+            int_val = choice["id"][0];
+          }
+
+          option.choice_names.push_back(choice["name"]);
+          option.choices.Append(int_val, choice["value"]);
         }
 
         if (option_data["defaultValue"] == "random") {
@@ -228,12 +238,11 @@ GameDefinitions::GameDefinitions() {
           }
         } else if (option_definition.type == kSelectOption) {
           if (option_value.is_string() &&
-              option_definition.choices.HasKey(option_value)) {
+              option_definition.choices.HasValue(option_value)) {
             ov.string_value = option_value;
           } else if (option_value.is_number() &&
-                     option_definition.choices.HasId(option_value)) {
-            ov.string_value =
-                option_definition.choices.GetKeyById(option_value);
+                     option_definition.choices.HasKey(option_value)) {
+            ov.string_value = option_definition.choices.GetByKey(option_value);
           } else if (option_value.is_boolean()) {
             if (option_value) {
               ov.string_value = "true";

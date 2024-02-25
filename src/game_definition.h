@@ -66,7 +66,8 @@ struct OptionDefinition {
   SetType set_type = kUNKNOWN_SET_TYPE;
   DoubleMap<std::string> custom_set;
 
-  OrderedBijection<std::string, std::string> choices;  // id, display name
+  OrderedBijection<int, std::string> choices;  // id, name
+  std::vector<std::string> choice_names;
 
   OptionValue default_value;
 };

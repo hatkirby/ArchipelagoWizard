@@ -14,17 +14,32 @@ OptionValue OptionValueForChoiceValue(const OptionDefinition& option,
   OptionValue option_value;
 
   std::string str_val = node.as<std::string>();
-  if (option.choices.HasKey(str_val)) {
+  if (option.choices.HasValue(str_val)) {
     option_value.string_value = str_val;
   } else if (str_val == "random") {
     option_value.random = true;
   } else {
-    wxString error;
-    error << "Unknown value \"";
-    error << str_val;
-    error << "\".";
+    try {
+      int int_val = std::stoi(str_val);
 
-    option_value.error = error.ToStdString();
+      if (option.choices.HasKey(int_val)) {
+        option_value.int_value = int_val;
+      } else {
+        wxString error;
+        error << "Unknown ID \"";
+        error << int_val;
+        error << "\".";
+
+        option_value.error = error.ToStdString();
+      }
+    } catch (const std::invalid_argument&) {
+      wxString error;
+      error << "Unknown value \"";
+      error << str_val;
+      error << "\".";
+
+      option_value.error = error.ToStdString();
+    }
   }
 
   return option_value;

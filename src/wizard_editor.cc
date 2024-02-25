@@ -280,8 +280,7 @@ FormOption::FormOption(WizardEditor* parent, wxWindow* container,
   if (game_option.type == kSelectOption) {
     combo_box_ = new wxChoice(container, wxID_ANY);
 
-    for (const auto& [value_id, value_display] :
-         game_option.choices.GetItems()) {
+    for (const std::string& value_display : game_option.choice_names) {
       combo_box_->Append(value_display);
     }
 
@@ -391,7 +390,7 @@ void FormOption::PopulateFromWorld() {
       random_button_->SetValue(false);
       random_button_->Enable();
 
-      int index = game_option.choices.GetKeyId(ov.string_value);
+      int index = game_option.choices.GetValueId(ov.string_value);
       combo_box_->SetSelection(index);
       combo_box_->Enable();
     }
@@ -529,7 +528,7 @@ void FormOption::OnRandomClicked(wxCommandEvent& event) {
       if (option_value.random) {
         if (game_option.default_value.random) {
           dlg_value.string_value =
-              std::get<0>(game_option.choices.GetItems().at(0));
+              std::get<1>(game_option.choices.GetItems().at(0));
           parent_->world_->SetOption(option_name_, dlg_value);
         } else {
           parent_->world_->UnsetOption(option_name_);
@@ -611,7 +610,7 @@ void FormOption::SaveToWorld() {
 
   OptionValue new_value;
   if (game_option.type == kSelectOption) {
-    new_value.string_value = std::get<0>(
+    new_value.string_value = std::get<1>(
         game_option.choices.GetItems().at(combo_box_->GetSelection()));
   } else if (game_option.type == kRangeOption) {
     new_value.int_value = numeric_picker_->GetValue();
