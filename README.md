@@ -20,8 +20,8 @@ ArchipelagoWizard is a tool that can be used to generate YAML files compatible w
 
 ## Screenshots
 
-<img src="https://github.com/hatkirby/ArchipelagoWizard/assets/442990/f98de7af-ebf5-42e0-aaf1-e9647e49ae5a" alt="Screenshot of the main ArchipelagoWizard window" width="420"/> <img src="https://github.com/hatkirby/ArchipelagoWizard/assets/442990/4d2ff465-b61b-4ff3-80b3-17f005352d74" alt="Screenshot of the YAML editor" width="420"/>
-<img src="https://github.com/hatkirby/ArchipelagoWizard/assets/442990/f3f18c67-0c5d-47ee-aeaa-82403c3b68ed" alt="Screenshot of the advanced randomization dialog" width="420"/> <img src="https://github.com/hatkirby/ArchipelagoWizard/assets/442990/cf75eb37-f1b9-4379-b8e3-ceb5636440fd" alt="Screenshot of the item picker dialog" width="420" />
+<img src="https://github.com/hatkirby/ArchipelagoWizard/assets/442990/f98de7af-ebf5-42e0-aaf1-e9647e49ae5a" alt="Screenshot of the main ArchipelagoWizard window" width="400"/> <img src="https://github.com/hatkirby/ArchipelagoWizard/assets/442990/4d2ff465-b61b-4ff3-80b3-17f005352d74" alt="Screenshot of the YAML editor" width="400"/>
+<img src="https://github.com/hatkirby/ArchipelagoWizard/assets/442990/f3f18c67-0c5d-47ee-aeaa-82403c3b68ed" alt="Screenshot of the advanced randomization dialog" width="400"/> <img src="https://github.com/hatkirby/ArchipelagoWizard/assets/442990/cf75eb37-f1b9-4379-b8e3-ceb5636440fd" alt="Screenshot of the item picker dialog" width="400" />
 
 ## Getting started
 
