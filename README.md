@@ -1,6 +1,6 @@
 # ArchipelagoWizard
 
-ArchipelagoWizard is a tool that can be used to generate YAML files compatible with the [Archipelago](https://archipelago.gg/) multiworld multi-game randomizer. It aims to replicate the experience of using the archipelago.gg website, while also allowing you to configure options for worlds that are not officially supported by Archipelago.
+ArchipelagoWizard is a tool that can be used to generate YAML files compatible with the [Archipelago](https://archipelago.gg/) multiworld multi-game randomizer. It aims to replicate the experience of using the archipelago.gg website for creating YAMLs, while also allowing you to configure options for worlds that are not officially supported by Archipelago.
 
 ## Features
 
