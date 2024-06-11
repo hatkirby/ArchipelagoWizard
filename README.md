@@ -29,6 +29,12 @@ The latest version can be downloaded on [the releases page](https://github.com/h
 
 Only Windows builds are provided currently. However, ArchipelagoWizard is compatible with both macOS and Linux, and has been tested on both.
 
+ArchipelagoWizard uses a datafile of options dumped from Archipelago. If you have any installed apworlds that you would like to see options for, you need to generate a new datafile. You can do this using the wizard apworld (`wizard.apworld`). Install it in your `lib/worlds` folder the way you would install any other apworld, and then open the Launcher, and click "Dump Options for Wizard". If successful, it should create a file called `dumped-options.json` in your Archipelago directory. This file then just needs to be copied into the same folder as the ap-wizard executable.
+
+**NOTE**: There is an issue with Archipelago 0.4.7 and earlier where option aliases are ignored. There is an open PR to fix it (ArchipelagoMW/Archipelago#3512).
+
+## Building from source
+
 Compiling from source requires `cmake` and `ninja-build`. Run the following commands to configure and build:
 
 ```sh
@@ -38,5 +44,3 @@ cmake --build --preset ap-wizard-debug
 ```
 
 Replace "debug" with "release" for a release-optimised build.
-
-ArchipelagoWizard uses a datafile of options dumped from Archipelago. A script (`DumpOptions.py`) is included in this repository which can be copied into an Archipelago source tree and used to generate this datafile. A minor change to `Options.py` is also needed ([source](https://github.com/hatkirby/Archipelago/commit/123524a7c31a08813c4b6ce3a03c8afbbb3a990c#diff-0f5a189559e017401b555bcac1815941d9c9cbe91169c88ce50818038ab3e44e)). There is not currently a way to generate this file with a frozen Archipelago release, but ideally there will be one going forward. The datafile is called `dumped-options.json` and must be put in the same folder as the executable.
