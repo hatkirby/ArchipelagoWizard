@@ -137,17 +137,19 @@ def dump(output_path: str):
             "itemGroups": [
                 group for group in world.item_name_groups.keys() if group != "Everything"
             ],
-            "itemDescriptions": world.item_descriptions,
+            "itemDescriptions": world.item_descriptions if hasattr(world, "item_descriptions") else {},
             "locations": tuple(world.location_names),
             "locationGroups": [
                 group for group in world.location_name_groups.keys() if group != "Everywhere"
             ],
-            "locationDescriptions": world.location_descriptions,
+            "locationDescriptions": world.location_descriptions if hasattr(world, "location_descriptions") else {},
             "presets": world.web.options_presets,
         }
 
     with open(output_path, "w") as f:
         json.dump(options_output, f, indent=2, separators=(',', ': '))
+
+    logging.info(f"Done! Output written to {output_path}")
 
 
 if __name__ == '__main__':
