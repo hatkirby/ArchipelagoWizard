@@ -51,11 +51,12 @@ def dump(output_path: str):
                     if sub_option_id == option.default:
                         this_option["defaultValue"] = sub_option_name
 
-                for alias_name, sub_option_id in option.aliases.items():
-                    this_option.setdefault("aliases", []).append({
-                        "name": alias_name,
-                        "value": option.name_lookup[sub_option_id]
-                    })
+                if hasattr(option, "aliases"):
+                    for alias_name, sub_option_id in option.aliases.items():
+                        this_option.setdefault("aliases", []).append({
+                            "name": alias_name,
+                            "value": option.name_lookup[sub_option_id]
+                        })
 
                 if not this_option["defaultValue"]:
                     this_option["defaultValue"] = "random"
