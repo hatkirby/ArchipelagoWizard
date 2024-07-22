@@ -147,8 +147,13 @@ def dump(output_path: str):
             "presets": world.web.options_presets,
         }
 
+    def set_default(obj):
+        if isinstance(obj, frozenset):
+            return list(obj)
+        raise TypeError
+
     with open(output_path, "w") as f:
-        json.dump(options_output, f, indent=2, separators=(',', ': '))
+        json.dump(options_output, f, indent=2, separators=(',', ': '), default=set_default)
 
     logging.info(f"Done! Output written to {output_path}")
 
