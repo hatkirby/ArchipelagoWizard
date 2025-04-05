@@ -8,11 +8,11 @@ import Utils
 if Utils.is_frozen():
     os.environ["KIVY_DATA_DIR"] = Utils.local_path("data")
 
+from kvui import ContainerLayout, UILog, MainLayout, TooltipLabel
 from kivy.app import App
 from kivy.uix.layout import Layout
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
 
-from kvui import ContainerLayout, UILog, MainLayout, TooltipLabel
 from worlds.AutoWorld import World
 from worlds.LauncherComponents import Component, Type, components, launch_subprocess
 from . import DumpOptions
