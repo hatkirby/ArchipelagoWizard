@@ -53,6 +53,7 @@ struct OptionValue {
 struct OptionDefinition {
   OptionType type = kUNKNOWN_OPTION_TYPE;
   bool common = false;
+  bool hidden = false;
 
   std::string name;
   std::string display_name;

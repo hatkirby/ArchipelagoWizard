@@ -55,6 +55,10 @@ GameDefinitions::GameDefinitions() {
         option.description = option_data["description"];
       }
 
+      if (option_data.contains("hidden")) {
+        option.hidden = option_data["hidden"];
+      }
+
       if (option_data["type"] == "select") {
         option.type = kSelectOption;
 

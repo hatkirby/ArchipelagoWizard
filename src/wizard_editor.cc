@@ -93,6 +93,10 @@ void WizardEditor::Rebuild() {
       common_options_pane_->Destroy();
       common_options_pane_ = nullptr;
     }
+    if (hidden_options_pane_ != nullptr) {
+      hidden_options_pane_->Destroy();
+      hidden_options_pane_ = nullptr;
+    }
     form_options_.clear();
   }
 
@@ -105,13 +109,16 @@ void WizardEditor::Rebuild() {
     options_form_sizer->AddGrowableCol(1);
 
     std::vector<const OptionDefinition*> common_options;
+    std::vector<const OptionDefinition*> hidden_options;
     for (const OptionDefinition& game_option : game.GetOptions()) {
       if (game_option.common) {
         common_options.push_back(&game_option);
-        continue;
+      } else if (game_option.hidden) {
+        hidden_options.push_back(&game_option);
+      } else {
+        form_options_.emplace_back(this, other_options_, game_option.name,
+                                   options_form_sizer);
       }
-      form_options_.emplace_back(this, other_options_, game_option.name,
-                                 options_form_sizer);
     }
 
     other_options_->SetSizerAndFit(options_form_sizer);
@@ -136,6 +143,28 @@ void WizardEditor::Rebuild() {
 
       common_options_pane_->GetPane()->SetSizerAndFit(common_options_sizer);
       top_sizer_->Add(common_options_pane_,
+                      wxSizerFlags().DoubleBorder().Proportion(0).Expand());
+    }
+
+    if (!hidden_options.empty()) {
+      hidden_options_pane_ = new wxCollapsiblePane(
+          this, wxID_ANY, "Hidden Options", wxDefaultPosition, wxDefaultSize,
+          wxCP_DEFAULT_STYLE | wxCP_NO_TLW_RESIZE);
+
+      hidden_options_pane_->Bind(
+          wxEVT_COLLAPSIBLEPANE_CHANGED,
+          [this](wxCollapsiblePaneEvent&) { FixSize(); });
+
+      wxFlexGridSizer* hidden_options_sizer = new wxFlexGridSizer(3, 10, 10);
+      hidden_options_sizer->AddGrowableCol(1);
+
+      for (const OptionDefinition* game_option : hidden_options) {
+        form_options_.emplace_back(this, hidden_options_pane_->GetPane(),
+                                   game_option->name, hidden_options_sizer);
+      }
+
+      hidden_options_pane_->GetPane()->SetSizerAndFit(hidden_options_sizer);
+      top_sizer_->Add(hidden_options_pane_,
                       wxSizerFlags().DoubleBorder().Proportion(0).Expand());
     }
 

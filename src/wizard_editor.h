@@ -98,6 +98,7 @@ class WizardEditor : public wxScrolledWindow {
   wxChoice* preset_box_;
   wxPanel* other_options_ = nullptr;
   wxCollapsiblePane* common_options_pane_ = nullptr;
+  wxCollapsiblePane* hidden_options_pane_ = nullptr;
   wxBoxSizer* top_sizer_;
 
   std::list<FormOption> form_options_;
