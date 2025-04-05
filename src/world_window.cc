@@ -9,7 +9,7 @@ WorldWindow::WorldWindow(wxWindow* parent,
   Bind(wxEVT_NOTEBOOK_PAGE_CHANGING, &WorldWindow::OnPageChanging, this);
   Bind(wxEVT_NOTEBOOK_PAGE_CHANGED, &WorldWindow::OnPageChanged, this);
 
-  wizard_editor_ = new WizardEditor(this, game_definitions_);
+  wizard_editor_ = CreateWizardEditor(this, game_definitions_);
   yaml_editor_ = new YamlEditor(this);
 
   AddPage(wizard_editor_, "Wizard", true);

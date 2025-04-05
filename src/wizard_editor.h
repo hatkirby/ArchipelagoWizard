@@ -7,103 +7,27 @@
 #include <wx/wx.h>
 #endif
 
-#include <wx/checklst.h>
-#include <wx/collpane.h>
 #include <wx/scrolwin.h>
 
 #include <functional>
-#include <list>
-#include <map>
-#include <optional>
 
 #include "game_definition.h"
-#include "world.h"
 
-class wxChoice;
-class wxTextCtrl;
-class wxBoxSizer;
-class wxToggleButton;
-class NumericPicker;
-class WizardEditor;
 class World;
-
-class FormOption {
- public:
-  FormOption(WizardEditor* parent, wxWindow* container,
-             const std::string& option_name, wxSizer* sizer);
-
-  void PopulateFromWorld();
-
- private:
-  friend class WizardEditor;
-
-  void OnRangePickerChanged(wxCommandEvent& event);
-  void OnNamedRangeChanged(wxCommandEvent& event);
-  void OnSelectChanged(wxCommandEvent& event);
-  void OnListItemChecked(wxCommandEvent& event);
-  void OnRandomClicked(wxCommandEvent& event);
-  void OnOptionSetClicked(wxCommandEvent& event);
-  void OnItemDictClicked(wxCommandEvent& event);
-
-  void SaveToWorld();
-
-  WizardEditor* parent_;
-
-  std::string option_name_;
-  wxStaticText* option_label_ = nullptr;
-  wxChoice* combo_box_ = nullptr;
-  NumericPicker* numeric_picker_ = nullptr;
-  wxCheckListBox* list_box_ = nullptr;
-  wxToggleButton* random_button_ = nullptr;
-  wxButton* open_choice_btn_ = nullptr;
-};
 
 class WizardEditor : public wxScrolledWindow {
  public:
-  WizardEditor(wxWindow* parent, const GameDefinitions* game_definitions);
+  explicit WizardEditor(wxWindow* parent) : wxScrolledWindow(parent) {}
 
-  void LoadWorld(World* world);
+  virtual void LoadWorld(World* world) = 0;
 
-  void Reload();
+  virtual void Reload() = 0;
 
-  void SetMessageCallback(
-      std::function<void(const wxString&, const wxString&)> callback) {
-    message_callback_ = std::move(callback);
-  }
-
- private:
-  friend class FormOption;
-
-  void Populate();
-
-  void Rebuild();
-
-  void FixSize();
-
-  void OnChangeName(wxCommandEvent& event);
-  void OnChangeDescription(wxCommandEvent& event);
-  void OnChangeGame(wxCommandEvent& event);
-  void OnChangePreset(wxCommandEvent& event);
-
-  const GameDefinitions* game_definitions_;
-
-  World* world_ = nullptr;
-  std::optional<std::string> cur_game_;
-  bool first_time_ = true;
-
-  wxTextCtrl* name_box_;
-  wxTextCtrl* description_box_;
-  wxChoice* game_box_;
-  wxStaticText* preset_label_;
-  wxChoice* preset_box_;
-  wxPanel* other_options_ = nullptr;
-  wxCollapsiblePane* common_options_pane_ = nullptr;
-  wxCollapsiblePane* hidden_options_pane_ = nullptr;
-  wxBoxSizer* top_sizer_;
-
-  std::list<FormOption> form_options_;
-
-  std::function<void(const wxString&, const wxString&)> message_callback_;
+  virtual void SetMessageCallback(
+      std::function<void(const wxString&, const wxString&)> callback) = 0;
 };
+
+WizardEditor* CreateWizardEditor(wxWindow* parent,
+                                 const GameDefinitions* game_definitions);
 
 #endif /* end of include guard: WIZARD_EDITOR_H_AB195E2D */

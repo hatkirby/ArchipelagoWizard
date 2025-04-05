@@ -21,6 +21,16 @@ NumericPicker::NumericPicker(wxWindow* parent, wxWindowID id, int min, int max,
   SetSizer(sizer);
 }
 
+void NumericPicker::SetMin(int v) {
+  slider_->SetMin(v);
+  spin_ctrl_->SetMin(v);
+}
+
+void NumericPicker::SetMax(int v) {
+  slider_->SetMax(v);
+  spin_ctrl_->SetMax(v);
+}
+
 int NumericPicker::GetValue() const { return value_; }
 
 void NumericPicker::SetValue(int v) {

@@ -14,8 +14,11 @@ wxDECLARE_EVENT(EVT_PICK_NUMBER, wxCommandEvent);
 
 class NumericPicker : public wxPanel {
  public:
-  NumericPicker(wxWindow* parent, wxWindowID id, int min, int max,
-                int default_value);
+  NumericPicker(wxWindow* parent, wxWindowID id, int min = 0, int max = 10,
+                int default_value = 0);
+
+  void SetMin(int v);
+  void SetMax(int v);
 
   int GetValue() const;
 
