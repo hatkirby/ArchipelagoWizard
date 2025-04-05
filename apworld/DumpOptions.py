@@ -131,6 +131,10 @@ def dump(output_path: str):
             else:
                 logging.debug(f"{option} not exported.")
 
+            if option_name in game_options:
+                game_options[option_name]["hidden"] = (hasattr(option, "visibility") and
+                                                       option.visibility == Options.Visibility.none)
+
         options_output[game_name] = {
             "options": game_options,
             "commonOptions": common_options,
