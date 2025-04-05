@@ -35,6 +35,6 @@ std::ostream& operator<<(std::ostream& out, const Version& ver) {
   return out << "v" << ver.major << "." << ver.minor << "." << ver.revision;
 }
 
-constexpr const Version kWizardVersion = Version(0, 3, 1);
+constexpr const Version kWizardVersion = Version(0, 4, 0);
 
 #endif /* end of include guard: VERSION_H_C757E53C */
