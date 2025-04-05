@@ -15,6 +15,7 @@ GameDefinitions::GameDefinitions() {
     std::vector<OptionDefinition> options;
 
     std::set<std::string> sorted_game_items;
+    sorted_game_items.insert("Everything");
     for (const auto& item_name : game_data["itemGroups"]) {
       sorted_game_items.insert(item_name);
     }
@@ -28,6 +29,7 @@ GameDefinitions::GameDefinitions() {
     }
 
     std::set<std::string> sorted_game_locations;
+    sorted_game_locations.insert("Everywhere");
     for (const auto& location_name : game_data["locationGroups"]) {
       sorted_game_locations.insert(location_name);
     }
